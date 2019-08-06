@@ -1,0 +1,792 @@
+---
+title: "HDAT9600 Final Assignment Data Preparation Details"
+author: "Tim Churches"
+date: "05/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# knitr::opts_chunk$set(eval = FALSE)
+```
+
+## Introduction
+
+This R Markdown document provides details of how the data which is to be used for the HDAT9600 course final assignment was created. You should familiarise yourself with the contents of this document as background to the assignment. However, you are strongly recommended **not** to re-run this document to re-create the data. The data have already been provided as R data files (*.rds files), as described in the assignment document. However, all the files needed to reproduce the data preparation process have been provided.
+
+## Source data
+
+The source data for the assignment are data made freely available for the 2012 MIT PhysioNet/Computing for Cardiology Challenge. Details are provided [here](https://physionet.org/challenge/2012/). Training Set A data have been used. 
+
+The description of the **source** data is as follows. Note that these source data have been transformed using the R code shown below, and thus the following descriptions need to be considered with that subsequent processing in mind:
+
+> The data used for the challenge consist of records from 12,000 ICU stays. All patients were adults who were admitted for a wide variety of reasons to cardiac, medical, surgical, and trauma ICUs [in the US]. ICU stays of less than 48 hours have been excluded. Patients with DNR (do not resuscitate) or CMO (comfort measures only) directives were **not** excluded.
+
+> Four thousand records comprise training set A. Outcomes are provided for the training set records in a separate file.
+
+> Up to 42 variables were recorded at least once during the first 48 hours after admission to the ICU. Not all variables are available in all cases, however. Six of these variables are general descriptors (collected on admission), and the remainder are time series, for which multiple observations may be available.
+
+> Each observation has an associated time-stamp indicating the elapsed time of the observation since ICU admission in each case, in hours and minutes. Thus, for example, a time stamp of 35:19 means that the associated observation was made 35 hours and 19 minutes after the patient was admitted to the ICU.
+
+> Each record is stored as a comma-separated value (CSV) text file. 
+ 
+> All valid values for general descriptors, time series variables, and outcome-related descriptors are non-negative (≥ 0). A value of -1 indicates missing or unknown data (for example, if a patient's height was not recorded).
+
+The 4,000 CSV files containing data for each patient were downlaoded for you and are stored in the raw-data/ subdirectory of the top-level project directory.
+
+> General Descriptors
+
+> As noted, these six descriptors are collected at the time the patient is admitted to the ICU. Their associated time-stamps are set to 00:00 (thus they appear at the beginning of each patient's record):
+* RecordID (a unique integer for each ICU stay)
+* Age (years)
+* Gender (0: female, or 1: male)
+* Height (cm)
+* ICUType (1: Coronary Care Unit, 2: Cardiac Surgery Recovery Unit, 3: Medical ICU, or 4: Surgical ICU)
+* Weight (kg)
+
+> Time Series variables
+
+> These 37 variables may be observed once, more than once, or not at all in
+some cases:
+<ul>
+<li><a href="http://en.wikipedia.org/wiki/Human_serum_albumin" target="_blank">
+<em>Albumin</em></a> (g/dL)</li>
+<li><a href="http://en.wikipedia.org/wiki/Alkaline_phosphatase" target="_blank">
+<em>ALP</em></a> [Alkaline phosphatase (IU/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Alanine_transaminase" target="_blank">
+<em>ALT</em></a> [Alanine transaminase (IU/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Aspartate_transaminase" target="_blank">
+<em>AST</em></a> [Aspartate transaminase (IU/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Bilirubin" target="_blank">
+<em>Bilirubin</em></a> (mg/dL)</li>
+<li><a href="http://en.wikipedia.org/wiki/BUN" target="_blank">
+<em>BUN</em></a> [Blood urea nitrogen (mg/dL)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Cholesterol" target="_blank">
+<em>Cholesterol</em></a> (mg/dL)</li>
+<li><a href="http://en.wikipedia.org/wiki/Serum_creatinine#Plasma_creatinine"
+target="_blank">
+<em>Creatinine</em></a> [Serum creatinine (mg/dL)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Diastolic_blood_pressure"
+target="_blank">
+<em>DiasABP</em></a> [Invasive diastolic arterial blood pressure (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/FIO2" target="_blank">
+<em>FiO2</em></a> [Fractional inspired O<sub>2</sub> (0-1)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Glasgow_coma_score" target="_blank">
+<em>GCS</em></a> [Glasgow Coma Score (3-15)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Serum_glucose" target="_blank">
+<em>Glucose</em></a> [Serum glucose (mg/dL)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Bicarbonate#Diagnostics"
+target="_blank">
+<em>HCO3</em></a> [Serum bicarbonate (mmol/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Hematocrit" target="_blank">
+<em>HCT</em></a> [Hematocrit (%)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Heart_rate" target="_blank">
+<em>HR</em></a> [Heart rate (bpm)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Hypokalemia" target="_blank">
+<em>K</em></a> [Serum potassium (mEq/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Lactic_acid" target="_blank">
+<em>Lactate</em></a> (mmol/L)</li>
+<li><a href="http://en.wikipedia.org/wiki/Magnesium#Biological_role"
+target="_blank">
+<em>Mg</em></a> [Serum magnesium (mmol/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Mean_arterial_pressure">
+<em>MAP</em></a> [Invasive mean arterial blood pressure (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Mechanical_ventilation"
+target="_blank">
+<em>MechVent</em></a> [Mechanical ventilation respiration (0:false, or 1:true)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Serum_sodium" target="_blank">
+<em>Na</em></a> [Serum sodium (mEq/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Diastolic_blood_pressure"
+target="_blank">
+<em>NIDiasABP</em></a> [Non-invasive diastolic arterial blood pressure (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Mean_arterial_pressure">
+<em>NIMAP</em></a> [Non-invasive mean arterial blood pressure (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Systolic_blood_pressure"
+target="_blank">
+<em>NISysABP</em></a> [Non-invasive systolic arterial blood pressure (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Arterial_blood_gas" target="_blank">
+<em>PaCO2</em></a> [partial pressure of arterial CO<sub>2</sub> (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Arterial_blood_gas" target="_blank">
+<em>PaO2</em></a> [Partial pressure of arterial O<sub>2</sub> (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Arterial_blood_gas" target="_blank">
+<em>pH</em></a> [Arterial pH (0-14)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Platelets" target="_blank">
+<em>Platelets</em></a> (cells/nL)</li>
+<li><a href="http://en.wikipedia.org/wiki/Respiratory_physiology" target="_blank">
+<em>RespRate</em></a> [Respiration rate (bpm)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Arterial_blood_gas" target="_blank">
+<em>SaO2</em></a> [O<sub>2</sub> saturation in hemoglobin (%)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Systolic_blood_pressure"
+target="_blank">
+<em>SysABP</em></a> [Invasive systolic arterial blood pressure (mmHg)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Normal_human_body_temperature"
+target="_blank">
+<em>Temp</em></a> [Temperature (&deg;C)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Troponin" target="_blank">
+<em>TropI</em></a> [Troponin-I (&mu;g/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Troponin" target="_blank">
+<em>TropT</em></a> [Troponin-T (&mu;g/L)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Fluid_balance" target="_blank">
+<em>Urine</em></a> [Urine output (mL)]</li>
+<li><a href="http://en.wikipedia.org/wiki/Reference_ranges_for_blood_tests#Hematology" target="_blank">
+<em>WBC</em></a> [White blood cell count (cells/nL)]</li>
+<li>
+<em>Weight</em> (kg)</li>
+</ul>
+
+> The time series measurements are recorded in chronological order
+within each record, and the associated time stamps indicate the
+elapsed time since admission to the ICU.  Measurements may be recorded at
+regular intervals ranging from hourly to daily, or at irregular
+intervals as required.  Not all time series are available in all
+cases.
+
+> In a few cases, such as blood pressure, different measurements made
+using two or more methods or sensors may be recorded with the same or only
+slightly different time-stamps.  Occasional outliers should be expected as well.
+
+> Note that <em>Weight</em> is both a
+general descriptor (recorded on admission) and a time series variable (often
+measured hourly, for estimating fluid balance).
+
+> Outcome-related Descriptors
+
+> The outcome-related descriptors are kept in a separate CSV text file for each
+of the three record sets; as noted, only the file associated with training set
+A is available to participants.  Each line of the outcomes file contains these
+descriptors:
+<ul>
+<li> <em>RecordID</em> (defined as above)</li>
+<li> <em>SAPS-I score</em> (<a href="http://www.ncbi.nlm.nih.gov/pubmed/6499483"
+target="_blank">Le Gall et al., 1984</a>)</li>
+<li> <em>SOFA score</em> (<a href="http://www.ncbi.nlm.nih.gov/pubmed/11594901"
+target="_blank">Ferreira et al., 2001</a>)</li>
+<li> <em>Length of stay</em> (days)</li>
+<li> <em>Survival</em> (days)</li>
+<li> <em>In-hospital death</em> (0: survivor, or 1: died in-hospital)</li>
+</ul>
+
+Note that the SAPS-I and SOFA scores are summary predictor scores (that you may wish to use in your models) --- they are **not** outcome variables, despite being supplied in the outcomes data file.
+
+> The <em>Length of stay</em> is the number of days between the patient's
+admission to the ICU and the end of hospitalization (including any time spent
+in the hospital after discharge from the ICU).  If the patient's death was
+recorded (in or out of hospital), then <em>Survival</em> is the number of days
+between ICU admission and death; otherwise, <em>Survival</em> is assigned the
+value -1.  Since patients who spent less than 48 hours in the ICU have been
+excluded, <em>Length of stay</em> and <em>Survival</em> never have the values
+0 or 1 in the data sets.  Given these definitions and constraints, the following rules apply:
+
+> <em>Survival</em> > <em>Length of stay</em>&nbsp;&nbsp;&rArr;&nbsp;&nbsp;Survivor<br>
+<em>Survival</em> = -1&nbsp;&nbsp;&rArr;&nbsp;&nbsp;Survivor<br>
+2 &le; <em>Survival</em> &le; <em>Length of stay</em>&nbsp;&nbsp;&rArr;&nbsp;&nbsp;In-hospital death
+
+## Data preparation
+
+In order to make the source data easier to use for the purposes of this final assignment, the following transformation and data preparation steps have been carried out. Each stage is explained in detail in the comments embedded in the code.
+
+
+### Stage 1 - read the data into R
+
+The goal here is to read in each of the 4,000 individual patient files, and merge those into a single data frame, with one row per patient per Parameter (measurement) per time point. We also read in the outcomes file.
+
+```{r read-data, eval=TRUE, message=FALSE}
+# load required libraries
+library(tidyverse)
+library(magrittr)
+
+# read the outcomes CSV file
+outcomes <- read_csv("raw-data/outcomes-a.txt")
+
+# create a vector of all the files names for the individual patient data files
+file_list <- list.files("raw-data/set-a/", full.names = TRUE)
+
+# define the column specifications for reading the data from each patient file
+colspec <- cols(
+  Time = col_character(),
+  Parameter = col_character(),
+  Value = col_double()
+)
+
+# initialise counter
+n <- 1
+
+# remove existing data frame if present
+if(exists("events")) rm(events)
+
+# loop through each patient file
+for (file in file_list){
+  # print a progress message
+  if (n %% 100 == 0) print(n)  
+  # read the patient data file into temp_events data frame
+  temp_events <-read_csv(file, col_types = colspec)
+  # get the RecordID
+  RecordID <- as.integer(temp_events[temp_events$Parameter == "RecordID",]$Value)
+  # add it as a column to all rows of the data frame
+  temp_events$RecordID <- RecordID
+  # remove the RecordID row from the data frame
+  temp_events <- temp_events[temp_events$Parameter != "RecordID",]
+  # if the merged dataset doesn't exist, create it
+  if (!exists("events")){
+    events <- temp_events
+  } else {
+    # if the merged dataset does exist, append to it
+    events <- bind_rows(events, temp_events)
+  }
+  # cleean up the temporary data frame
+  rm(temp_events)
+  # increment the loop counter
+  n <- n + 1
+}
+```
+
+### Stage 2 - subset the data to the first 24 hours
+
+The goal here is to keep to only those measurements/values for the first 24 hours in ICU for each patient.
+
+```{r subset-adt-first-24hrs, eval=TRUE}
+# from the events data frame
+events_first_24hrs <- events %>% 
+          # first split the character Time value into numeric hours and minutes parts
+          separate(Time, c("ts_hours", "ts_minutes"), sep = ":", convert=TRUE) %>%
+          # derive a time offset variable in minutes from hours and minutes
+          mutate(toffset = ts_hours*60 + ts_minutes) %>%
+          # remove the non-longer-needed hours and minutes columns
+          select(-ts_hours, -ts_minutes) %>%
+          # retain rows only for the first 24 hrs in ICU
+          filter(toffset <= 60*24)
+```
+
+### Stage 3 - check the data
+
+The goal in this stage is to check univariate summary statistics and to visualise a histogram for each _Parameter_ (that is, measurement/value type (**not** "parameter estimate" as in a statistical model) in the data, **before** we "roll up" the data into one row per patient. Currently those data are in "long, thin" format with one row per patient per _Parameter_ per time point (in the first 24 hours in ICU), and in that form it is much easier to assess the distribution of all values for each patient for each _Parameter_.
+
+```{r histogram-function, eval=TRUE}
+# the events_first_24hrs data frame has one row per Parameter (variable) per time point per patient
+# so, define a function to print summary statistics and draw a histogram for each
+# Parameter in the data frame
+check <- function(varname) {
+  a <- events_first_24hrs %>% filter(Parameter == varname) %>%
+        rename(!!varname := Value) 
+  print(summary(a[varname]))
+  ggplot(a, aes_string(x=varname)) + geom_histogram() + ggtitle(varname)
+}
+
+# then call the function on each Parameter in the data frame
+```
+
+```{r check-Age}
+check("Age")
+```
+
+```{r check-Gender}
+check("Gender")     
+```
+
+```{r check-Height}
+check("Height")     
+```
+
+```{r check-ICUType}
+check("ICUType")    
+```
+
+```{r check-Weight}
+check("Weight")     
+```
+
+```{r check-GCS}
+check("GCS")        
+```
+
+```{r check-HR}
+check("HR")         
+```
+
+```{r check-NIDiasABP}
+check("NIDiasABP")  
+```
+
+```{r check-NIMAP}
+check("NIMAP")      
+```
+
+```{r check-NISysABP}
+check("NISysABP")   
+```
+
+```{r check-RespRate}
+check("RespRate")   
+```
+
+```{r check-Temp}
+check("Temp")       
+```
+
+```{r check-Urine}
+check("Urine")      
+```
+
+```{r check-HCT}
+check("HCT")        
+```
+
+```{r check-BUN}
+check("BUN")        
+```
+
+```{r check-Creatinine}
+check("Creatinine") 
+```
+
+```{r check-Glucose}
+check("Glucose")    
+```
+
+```{r check-HCO3}
+check("HCO3")       
+```
+
+```{r check-MG}
+check("Mg")         
+```
+
+```{r checl-Platelets}
+check("Platelets")  
+```
+
+```{r check-K}
+check("K")          
+```
+
+```{r check-Na}
+check("Na")         
+```
+
+```{r check-WBC}
+check("WBC")        
+```
+
+```{r check-pH}
+check("pH")         
+```
+
+```{r check-PaCO2}
+check("PaCO2")      
+```
+
+```{r check-PaO2}
+check("PaO2")       
+```
+
+```{r check-DiasABP}
+check("DiasABP")    
+```
+
+```{r check-FiO2}
+check("FiO2")       
+```
+
+```{r check-MAP}
+check("MAP")        
+```
+
+```{r check-MechVent}
+check("MechVent")   
+```
+
+```{r check-SysABP}
+check("SysABP")     
+```
+
+```{r check-SaO2}
+check("SaO2")       
+```
+
+```{r check-Albumin}
+check("Albumin")    
+```
+
+```{r check-ALP}
+check("ALP")        
+```
+
+```{r check-ALT}
+check("ALT")        
+```
+
+```{r check-AST}
+check("AST")        
+```
+
+```{r check-Bilirubin}
+check("Bilirubin")  
+```
+
+```{r check-Lactate}
+check("Lactate")    
+```
+
+```{r check-Cholesterol}
+check("Cholesterol")
+```
+
+```{r check-TroponinI}
+check("TroponinI")  
+```
+
+```{r check-TroponinT}
+check("TroponinT")
+```
+
+OK, after reviewing those, we see that several _Parameters_ have obviously incorrect values which need to be trimmed, and quite a few have values of zero (as well as -1) which need to be set to missing (NA). That is done in a later stage (see below).
+
+```{r trim-data, eval=TRUE}
+# before calculating trimmed means, we set zero or negative values to missing, and set a 
+# few extreme values for some Parameters to missing also
+trimmed_events_first_24hrs <- events_first_24hrs %>%
+                              mutate(Value = case_when(Parameter == "Height" & Value < 10 ~ NA_real_,
+                                                        Parameter == "Temp" & Value < 20 ~ NA_real_,
+                                                        Parameter == "pH" & Value > 9 ~ NA_real_,
+                                                        Parameter %in% c("Weight",
+                                                                         "NIDiasABP",
+                                                                         "NIMAP",
+                                                                         "NISysABP",
+                                                                         "DiasABP",
+                                                                         "MAP",
+                                                                         "SysABP",
+                                                                         "RespRate",
+                                                                         "BUN",
+                                                                         "Creatinine",
+                                                                         "Platelets",
+                                                                         "WBC") & Value <= 0 ~ NA_real_,
+                                                        TRUE ~ Value))
+```
+
+
+### Stage 4 - calculate minimum and maximum values
+
+Next, for each patient, we calculate the minimum and maximum values for each Parameter. We also calculate the trimmed mean for each Parameter across all patients.
+
+```{r cal-min-max-mean-median, message=FALSE, eval=TRUE}
+# calculate the minimum and maximum value in the first 24 hrs in ICU for 
+# each Parameter (variable) for each patient
+patient_minmax_first_24hrs <- trimmed_events_first_24hrs %>%
+                              group_by(RecordID, Parameter) %>%
+                              summarise(patient_min_value = min(Value, na.rm=TRUE),
+                                        patient_max_value = max(Value, na.rm = TRUE)) %>%
+                              ungroup()
+
+# calculate the overall trimmed (robust) means for each Parameter (variable) for all patients
+# for the first 24 hrs in ICU
+# this results in just one row containing all the trimmed means values for each variable as a column
+overall_trimmed_mean_values_first_24hrs <- trimmed_events_first_24hrs %>% 
+                                  group_by(Parameter) %>%
+                                  summarise(overall_mean_value = mean(Value, trim=0.05, na.rm=TRUE)) %>%
+                                  ungroup() %>%
+                                  spread(Parameter, overall_mean_value) %>%
+                                  rename_all(function(.) {paste(.,"overall_trimmed_mean",sep="_")})
+```
+
+### Stage 5 - pivot into one row per patient
+
+In this stage, we also use the `spread()` function from the _tidyr_ package to "pivot" the rows-per-Parameter into columns-per-Parameter, giving us just one row per patient. We also join the  overall trimmed mean  values data frames to every row, and use those columns to calculate an absolute difference from the overall trimmed mean for most of the predictor variables (columns).
+
+```{r rows-to-cols, eval=TRUE}
+# convert one row per Parameter into one column per Parameter
+# start with a data frame containing one row per Patient per Parameter,
+# each row containing the minimum and maximum vlaue of that Parameter for
+# that patient in the first 24 hrs in ICU
+minima <- patient_minmax_first_24hrs %>% 
+          # remove the maximum value column
+          select(-patient_max_value) %>% 
+          # convert rows per Parameter, per patient into 
+          # columns per Parameter, rows per patient
+          spread(Parameter, patient_min_value) %>% 
+          # add _min to the end of each column name
+          rename_all(function(.) {paste(.,"min",sep="_")}) %>% 
+          # undo that for the special case of the RecordID column
+          rename(RecordID = RecordID_min)
+
+# same as above but for maxima, not minima
+maxima <- patient_minmax_first_24hrs %>% 
+          select(-patient_min_value) %>% 
+          spread(Parameter, patient_max_value) %>% 
+          rename_all(function(.) {paste(.,"max",sep="_")}) %>% 
+          rename(RecordID = RecordID_max)
+
+# join all the data frames together, start with the minima data frame
+icu_patients <- minima %>% 
+                # join that to the maxima, on a per patient basis 
+                # (each value of RecordID is one patient)
+                left_join(maxima, by="RecordID") %>%
+                # rename some columns where minimum and maximum are the same
+                rename(Gender = Gender_max, 
+                       Age = Age_max, 
+                       Height = Height_max,
+                       ICUType = ICUType_max) %>% 
+                # delete the redundant minimum versions of these columns,
+                # and also delete the MechVent columns which are almost all missing
+                select(-Gender_min, -Age_min, -Height_min, -ICUType_min, 
+                       -MechVent_min, -MechVent_max) %>%
+                # convert some categorical columns to factors with labels
+                mutate(Gender = factor(Gender, levels=0:1, labels=c("Female", "Male")),
+                       ICUType = factor(ICUType, levels=1:4, 
+                                        labels=c("Coronary Care Unit",
+                                                 "Cardiac Surgery Recovery Unit",
+                                                 "Medical ICU", "Surgical ICU"))) 
+  
+# check that these all have the same numbers of rows
+nrow(minima)
+nrow(maxima)
+nrow(icu_patients)
+```
+
+### Stage 6 - imputation of missing values
+
+There are many missing values in the data frames (as is typical of clinical data). In order to simplify the assignment tasks, we will **impute** all missing values, without regard for what proportion of values are missing for each variable. This is not strictly best practice, but has been done to allow students to use all (or at least more) rows of the data for the purposes of the assignment. There is no need for HDAT9600 students to understand the details of the MICE imputation being performed in this step. Imputation is covered in HDAT9700 course, for those taking it.
+
+However, the imputation process is not perfect, and several of the variables still have considerable numbers of missing values, even after imputation. One of the assignment tasks is to evaluate the degree of missingness of the variables and make some decisions about which to use in your statistical models.
+
+Two data frames are saved to RDS files: `icu_patients_df0` contains the prepared data, prior to imputation, `icu_patients_df1` contains the prepared data, following imputation.
+
+```{r impute-data, eval=TRUE, warning=FALSE, message=FALSE}
+library(mice)
+
+# impute missing data with MICE (but not all columns)
+imp_icu_patients <- mice(icu_patients, m=2, maxit=50, printFlag = FALSE)
+
+# summary(imp_icu_patients)
+
+# extract orinal data, and the imputed data, into two data frames.
+icu_patients_df0 <- complete(imp_icu_patients, action = 0L)
+icu_patients_df1 <- complete(imp_icu_patients, action = 1L)
+
+# function to remove infinite values which the imputation procedure may add
+remove_inf <- function(df) {
+  fixed_df <- df %>% 
+              mutate(Height = ifelse(is.infinite(Height), NA, Height),
+                     Albumin_min = ifelse(is.infinite(Albumin_min), NA, Albumin_min),
+                     ALP_min = ifelse(is.infinite(ALP_min), NA, ALP_min),
+                     ALT_min = ifelse(is.infinite(ALT_min), NA, ALT_min),
+                     AST_min = ifelse(is.infinite(AST_min), NA, AST_min),
+                     Bilirubin_min = ifelse(is.infinite(Bilirubin_min), NA, Bilirubin_min),
+                     BUN_min = ifelse(is.infinite(BUN_min), NA, BUN_min),
+                     Cholesterol_min = ifelse(is.infinite(Cholesterol_min), NA, Cholesterol_min),
+                     Creatinine_min = ifelse(is.infinite(Creatinine_min), NA, Creatinine_min),
+                     DiasABP_min = ifelse(is.infinite(DiasABP_min), NA, DiasABP_min),
+                     FiO2_min = ifelse(is.infinite(FiO2_min), NA, FiO2_min),
+                     GCS_min = ifelse(is.infinite(GCS_min), NA, GCS_min),
+                     Glucose_min = ifelse(is.infinite(Glucose_min), NA, Glucose_min),
+                     HCO3_min = ifelse(is.infinite(HCO3_min), NA, HCO3_min),
+                     HCT_min = ifelse(is.infinite(HCT_min), NA, HCT_min),
+                     HR_min = ifelse(is.infinite(HR_min), NA, HR_min),
+                     K_min = ifelse(is.infinite(K_min), NA, K_min),
+                     Lactate_min = ifelse(is.infinite(Lactate_min), NA, Lactate_min),
+                     MAP_min = ifelse(is.infinite(MAP_min), NA, MAP_min),
+                     Mg_min = ifelse(is.infinite(Mg_min), NA, Mg_min),
+                     Na_min = ifelse(is.infinite(Na_min), NA, Na_min),
+                     NIDiasABP_min = ifelse(is.infinite(NIDiasABP_min), NA, NIDiasABP_min),
+                     NIMAP_min = ifelse(is.infinite(NIMAP_min), NA, NIMAP_min),
+                     NISysABP_min = ifelse(is.infinite(NISysABP_min), NA, NISysABP_min),
+                     PaCO2_min = ifelse(is.infinite(PaCO2_min), NA, PaCO2_min),
+                     PaO2_min = ifelse(is.infinite(PaO2_min), NA, PaO2_min),
+                     pH_min = ifelse(is.infinite(pH_min), NA, pH_min),
+                     Platelets_min = ifelse(is.infinite(Platelets_min), NA, Platelets_min),
+                     RespRate_min = ifelse(is.infinite(RespRate_min), NA, RespRate_min),
+                     pH_min = ifelse(is.infinite(pH_min), NA, pH_min),
+                     SaO2_min = ifelse(is.infinite(SaO2_min), NA, SaO2_min),
+                     SysABP_min = ifelse(is.infinite(SysABP_min), NA, SysABP_min),
+                     Temp_min = ifelse(is.infinite(Temp_min), NA, Temp_min),
+                     TroponinI_min = ifelse(is.infinite(TroponinI_min), NA, TroponinI_min),
+                     TroponinT_min = ifelse(is.infinite(TroponinT_min), NA, TroponinT_min),
+                     Urine_min = ifelse(is.infinite(Urine_min), NA, Urine_min),
+                     WBC_min = ifelse(is.infinite(WBC_min), NA, WBC_min),
+                     Weight_min = ifelse(is.infinite(Weight_min), NA, Weight_min),
+                     Albumin_max = ifelse(is.infinite(Albumin_max), NA, Albumin_max),
+                     ALP_max = ifelse(is.infinite(ALP_max), NA, ALP_max),
+                     ALT_max = ifelse(is.infinite(ALT_max), NA, ALT_max),
+                     AST_max = ifelse(is.infinite(AST_max), NA, AST_max),
+                     Bilirubin_max = ifelse(is.infinite(Bilirubin_max), NA, Bilirubin_max),
+                     BUN_max = ifelse(is.infinite(BUN_max), NA, BUN_max),
+                     Cholesterol_max = ifelse(is.infinite(Cholesterol_max), NA, Cholesterol_max),
+                     Creatinine_max = ifelse(is.infinite(Creatinine_max), NA, Creatinine_max),
+                     DiasABP_max = ifelse(is.infinite(DiasABP_max), NA, DiasABP_max),
+                     FiO2_max = ifelse(is.infinite(FiO2_max), NA, FiO2_max),
+                     GCS_max = ifelse(is.infinite(GCS_max), NA, GCS_max),
+                     Glucose_max = ifelse(is.infinite(Glucose_max), NA, Glucose_max),
+                     HCO3_max = ifelse(is.infinite(HCO3_max), NA, HCO3_max),
+                     HCT_max = ifelse(is.infinite(HCT_max), NA, HCT_max),
+                     HR_max = ifelse(is.infinite(HR_max), NA, HR_max),
+                     K_max = ifelse(is.infinite(K_max), NA, K_max),
+                     Lactate_max = ifelse(is.infinite(Lactate_max), NA, Lactate_max),
+                     MAP_max = ifelse(is.infinite(MAP_max), NA, MAP_max),
+                     Mg_max = ifelse(is.infinite(Mg_max), NA, Mg_max),
+                     Na_max = ifelse(is.infinite(Na_max), NA, Na_max),
+                     NIDiasABP_max = ifelse(is.infinite(NIDiasABP_max), NA, NIDiasABP_max),
+                     NIMAP_max = ifelse(is.infinite(NIMAP_max), NA, NIMAP_max),
+                     NISysABP_max = ifelse(is.infinite(NISysABP_max), NA, NISysABP_max),
+                     PaCO2_max = ifelse(is.infinite(PaCO2_max), NA, PaCO2_max),
+                     PaO2_max = ifelse(is.infinite(PaO2_max), NA, PaO2_max),
+                     pH_max = ifelse(is.infinite(pH_max), NA, pH_max),
+                     Platelets_max = ifelse(is.infinite(Platelets_max), NA, Platelets_max),
+                     RespRate_max = ifelse(is.infinite(RespRate_max), NA, RespRate_max),
+                     pH_max = ifelse(is.infinite(pH_max), NA, pH_max),
+                     SaO2_max = ifelse(is.infinite(SaO2_max), NA, SaO2_max),
+                     SysABP_max = ifelse(is.infinite(SysABP_max), NA, SysABP_max),
+                     Temp_max = ifelse(is.infinite(Temp_max), NA, Temp_max),
+                     TroponinI_max = ifelse(is.infinite(TroponinI_max), NA, TroponinI_max),
+                     TroponinT_max = ifelse(is.infinite(TroponinT_max), NA, TroponinT_max),
+                     Urine_max = ifelse(is.infinite(Urine_max), NA, Urine_max),
+                     WBC_max = ifelse(is.infinite(WBC_max), NA, WBC_max),
+                     Weight_max = ifelse(is.infinite(Weight_max), NA, Weight_max))
+  return(fixed_df)
+}
+
+# call the function on the imputed datasets
+icu_patients_df1 <- remove_inf(icu_patients_df1)
+```
+
+                     
+### Stage 7 - add overall trimmed means 
+
+This stage joins the overall trimmed mean values to every row, and then uses these to calculate an absolute difference from the trimmed mean for most of the predictor variables, for each of the three data frames (one unimputed, two imputed).
+
+```{r diffs-from-mean, eval=TRUE}
+compute_diffs <- function(icu_df) {
+  icu_df_with_diffs <- icu_df %>%
+                # add the trimmed overall means to every row
+                crossing(overall_trimmed_mean_values_first_24hrs) %>%
+                # calculate the maximum absolute difference from the trimmed overal mean for each variable
+                mutate(Albumin_diff = pmax(abs(Albumin_overall_trimmed_mean - Albumin_min),
+                                           abs(Albumin_overall_trimmed_mean - Albumin_max), na.rm = TRUE),
+                       ALP_diff = pmax(abs(ALP_overall_trimmed_mean - ALP_min),
+                                           abs(ALP_overall_trimmed_mean - ALP_max), na.rm = TRUE),
+                       ALT_diff = pmax(abs(ALT_overall_trimmed_mean - ALT_min),
+                                           abs(ALT_overall_trimmed_mean - ALT_max), na.rm = TRUE),
+                       AST_diff = pmax(abs(AST_overall_trimmed_mean - AST_min),
+                                           abs(AST_overall_trimmed_mean - AST_max), na.rm = TRUE),
+                       Bilirubin_diff = pmax(abs(Bilirubin_overall_trimmed_mean - Bilirubin_min),
+                                           abs(Bilirubin_overall_trimmed_mean - Bilirubin_max), na.rm = TRUE),
+                       BUN_diff = pmax(abs(BUN_overall_trimmed_mean - BUN_min),
+                                           abs(BUN_overall_trimmed_mean - BUN_max), na.rm = TRUE),
+                       Cholesterol_diff = pmax(abs(Cholesterol_overall_trimmed_mean - Cholesterol_min),
+                                           abs(Cholesterol_overall_trimmed_mean - Cholesterol_max), na.rm = TRUE),
+                       Creatinine_diff = pmax(abs(Creatinine_overall_trimmed_mean - Creatinine_min),
+                                           abs(Creatinine_overall_trimmed_mean - Creatinine_max), na.rm = TRUE),
+                       DiasABP_diff = pmax(abs(DiasABP_overall_trimmed_mean - DiasABP_min),
+                                           abs(DiasABP_overall_trimmed_mean - DiasABP_max), na.rm = TRUE),
+                       FiO2_diff = pmax(abs(FiO2_overall_trimmed_mean - FiO2_min),
+                                           abs(FiO2_overall_trimmed_mean - FiO2_max), na.rm = TRUE),
+                       GCS_diff = pmax(abs(GCS_overall_trimmed_mean - GCS_min),
+                                           abs(GCS_overall_trimmed_mean - GCS_max), na.rm = TRUE),
+                       Glucose_diff = pmax(abs(Glucose_overall_trimmed_mean - Glucose_min),
+                                           abs(Glucose_overall_trimmed_mean - Glucose_max), na.rm = TRUE),
+                       HCO3_diff = pmax(abs(HCO3_overall_trimmed_mean - HCO3_min),
+                                           abs(HCO3_overall_trimmed_mean - HCO3_max), na.rm = TRUE),
+                       HCT_diff = pmax(abs(HCT_overall_trimmed_mean - HCT_min),
+                                           abs(HCT_overall_trimmed_mean - HCT_max), na.rm = TRUE),
+                       HR_diff = pmax(abs(HR_overall_trimmed_mean - HR_min),
+                                           abs(HR_overall_trimmed_mean - HR_max), na.rm = TRUE),
+                       K_diff = pmax(abs(K_overall_trimmed_mean - K_min),
+                                           abs(K_overall_trimmed_mean - K_max), na.rm = TRUE),
+                       Lactate_diff = pmax(abs(Lactate_overall_trimmed_mean - Lactate_min),
+                                           abs(Lactate_overall_trimmed_mean - Lactate_max), na.rm = TRUE),
+                       MAP_diff = pmax(abs(MAP_overall_trimmed_mean - MAP_min),
+                                           abs(MAP_overall_trimmed_mean - MAP_max), na.rm = TRUE),
+                       Mg_diff = pmax(abs(Mg_overall_trimmed_mean - Mg_min),
+                                           abs(Mg_overall_trimmed_mean - Mg_max), na.rm = TRUE),
+                       Na_diff = pmax(abs(Na_overall_trimmed_mean - Na_min),
+                                           abs(Na_overall_trimmed_mean - Na_max), na.rm = TRUE),
+                       NIDiasABP_diff = pmax(abs(NIDiasABP_overall_trimmed_mean - NIDiasABP_min),
+                                           abs(NIDiasABP_overall_trimmed_mean - NIDiasABP_max), na.rm = TRUE),
+                       NIMAP_diff = pmax(abs(NIMAP_overall_trimmed_mean - NIMAP_min),
+                                           abs(NIMAP_overall_trimmed_mean - NIMAP_max), na.rm = TRUE),
+                       NISysABP_diff = pmax(abs(NISysABP_overall_trimmed_mean - NISysABP_min),
+                                           abs(NISysABP_overall_trimmed_mean - NISysABP_max), na.rm = TRUE),
+                       PaCO2_diff = pmax(abs(PaCO2_overall_trimmed_mean - PaCO2_min),
+                                           abs(PaCO2_overall_trimmed_mean - PaCO2_max), na.rm = TRUE),
+                       PaO2_diff = pmax(abs(PaO2_overall_trimmed_mean - PaO2_min),
+                                           abs(PaO2_overall_trimmed_mean - PaO2_max), na.rm = TRUE),
+                       pH_diff = pmax(abs(pH_overall_trimmed_mean - pH_min),
+                                           abs(pH_overall_trimmed_mean - pH_max), na.rm = TRUE),
+                       Platelets_diff = pmax(abs(Platelets_overall_trimmed_mean - Platelets_min),
+                                           abs(Platelets_overall_trimmed_mean - Platelets_max), na.rm = TRUE),
+                       RespRate_diff = pmax(abs(RespRate_overall_trimmed_mean - RespRate_min),
+                                           abs(RespRate_overall_trimmed_mean - RespRate_max), na.rm = TRUE),
+                       SaO2_diff = pmax(abs(SaO2_overall_trimmed_mean - SaO2_min),
+                                           abs(SaO2_overall_trimmed_mean - SaO2_max), na.rm = TRUE),
+                       SysABP_diff = pmax(abs(SysABP_overall_trimmed_mean - SysABP_min),
+                                           abs(SysABP_overall_trimmed_mean - SysABP_max), na.rm = TRUE),
+                       Temp_diff = pmax(abs(Temp_overall_trimmed_mean - Temp_min),
+                                           abs(Temp_overall_trimmed_mean - Temp_max), na.rm = TRUE),
+                       TroponinI_diff = pmax(abs(TroponinI_overall_trimmed_mean - TroponinI_min),
+                                           abs(TroponinI_overall_trimmed_mean - TroponinI_max), na.rm = TRUE),
+                       TroponinT_diff = pmax(abs(TroponinT_overall_trimmed_mean - TroponinT_min),
+                                           abs(TroponinT_overall_trimmed_mean - TroponinT_max), na.rm = TRUE),
+                       Urine_diff = pmax(abs(Urine_overall_trimmed_mean - Urine_min),
+                                           abs(Urine_overall_trimmed_mean - Urine_max), na.rm = TRUE),
+                       WBC_diff = pmax(abs(WBC_overall_trimmed_mean - WBC_min),
+                                           abs(WBC_overall_trimmed_mean - WBC_max), na.rm = TRUE),
+                       Weight_diff = pmax(abs(Weight_overall_trimmed_mean - Weight_min),
+                                           abs(Weight_overall_trimmed_mean - Weight_max), na.rm = TRUE)
+                       ) %>% 
+                # remove the *_overall_trimmed_mean columns
+                select(-ends_with("_overall_trimmed_mean"))
+  return(icu_df_with_diffs)
+}
+
+# call that function for each of the two versions of the data
+icu_patients_df0 <- compute_diffs(icu_patients_df0)
+icu_patients_df1 <- compute_diffs(icu_patients_df1)
+```
+
+### Stage 8 - add outcome columns and clean up
+
+This stage joins the outcome columns on a per-patient basis, renames a few columns to make them easier to use and does some tidying up, and then sorts the columns into alphabetical order but puts the outcome columns at the "front". 
+
+We also create two new columns called `Days` and `Status`. Days contains the same value as the  `Survival` column if `Survival` is not missing (`NA`), otherwise it contains the maximum value of `Survival`. `Status` is set to 0 if `Survival` is missing, otherwise it is set to 1.  
+
+Thus, `Days` contains the time to death (in days) if the patient had died by the end of follow-up, or it contains the follow-up time (the censoring time) if the patient did not die during follow-up. For the purposes of this assignment, we have arbitrarily taken the follow-up time for all patients to be the maximum time to death in any patient (because duration of follow-up was not provided in the data).
+
+```{r join-outcomes, eval=TRUE}
+# define function to carry out tasks
+join_outcomes <- function(icu_df) {
+  icu_df_with_outcomes <- icu_df %>%
+                            # join the outcomes data frame
+                            left_join(outcomes, by="RecordID") %>%
+                            # rename a few columns to make them easier to use (remove dashes from names)
+                            rename(in_hospital_death = "In-hospital_death",
+                                   SAPS1 = "SAPS-I") %>%
+                            # fix missing for a few more variables
+                            mutate(SAPS1 = ifelse(SAPS1 != -1, SAPS1, NA),
+                                   Survival = ifelse(Survival == -1, NA, Survival)) %>%
+                            # create Days and Status columns
+                            mutate(Days = ifelse(is.na(Survival), max(Survival, na.rm = TRUE), Survival),
+                                   Status = ifelse(is.na(Survival), FALSE, TRUE)) %>%
+                            #  re-order the columns in alphabetical order
+                            select(sort(names(.))) %>% 
+                            # but move the RecordID and the SAPS, SOFA and outcome columns to the "front"
+                            select(RecordID, Length_of_stay, SAPS1, SOFA, 
+                                   Survival, in_hospital_death, Days, Status, everything()) 
+  
+  return(icu_df_with_outcomes)
+}
+
+# call that function for each of the three versions of the data
+icu_patients_df0 <- join_outcomes(icu_patients_df0)
+icu_patients_df1 <- join_outcomes(icu_patients_df1)
+
+# save each version to an rds file.
+saveRDS(icu_patients_df0, "icu_patients_df0.rds")
+saveRDS(icu_patients_df1, "icu_patients_df1.rds")
+```
+
+
+All of the above takes a while to run. This just posts a notification on your desktop when it has finished.
+
+```{r notify-completion, eval=TRUE, message=FALSE, warning=FALSE}
+if (require("notifier")) {
+  notifier::notify("Finished!")
+}
+```
