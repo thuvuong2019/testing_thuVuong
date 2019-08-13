@@ -153,6 +153,11 @@ icu_patients_df1 <- readRDS("icu_patients_df1.rds")
 
 In this task, you are required to develop a logistic regression model using the `icu_patients_df1` data set which adequately explains or predicts the `in_hospital_death` variable as the outcome using a subset of the available predictor variables. You should fit a series of models, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct or complete, but do you best). Aim for between five and ten predictor variables (slightly more or fewer is OK). You should assess each model you consider for goodness of fit and other relevant statistics to help you choose between them. For your final model, present a set of diagnostic statistics and/or charts and comment on them. You don't need to do an exhaustive exploratory data analysis of all the variables in the data set, but you should examine those variables that you use in your model. Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find compared to the same model fitted to the imputed data. 
 
+```{r}
+#This is testing from Thu
+```
+
+
 
 ### Hints
 
