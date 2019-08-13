@@ -144,7 +144,7 @@ target="_blank">
 ##Accessing the Data
 The data frame can be loaded with the following code:
 
-```
+```{r}
 icu_patients_df0 <- readRDS("icu_patients_df0.rds")
 icu_patients_df1 <- readRDS("icu_patients_df1.rds")
 ```
@@ -173,7 +173,14 @@ In this task, you are required to develop a logistic regression model using the 
 
 
 #####
-**Create your response to this task here, as a mixture of embedded (`knitr`) R code and any resulting outputs, and explanatory or commentary text.** 
+
+```{r}
+library(tidyverse)
+library(skimr)
+
+skim(icu_patients_df1)
+
+```
 
 
 
