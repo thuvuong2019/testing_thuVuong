@@ -10,6 +10,19 @@ output: html_document
 # leave this code here, but feel free to adjust the options or add some more
 # see the knitr documentation for details
 knitr::opts_chunk$set(echo = TRUE, fig.width=12, fig.height=12)
+
+
+#Set up Libraries
+list.of.packages <- c("ggplot2", "Rcpp", "DataExplorer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+
+library(tidyverse)
+library(magrittr)
+library(DataExplorer)
+library(skimr)
+
 ```
 
 ## Instructions
@@ -175,11 +188,19 @@ In this task, you are required to develop a logistic regression model using the 
 #####
 
 ```{r}
-library(tidyverse)
-library(skimr)
 
 skim(icu_patients_df1)
 str(icu_patients_df1, list.len = 120)
+
+introduce(icu_patients_df1)
+plot_intro(icu_patients_df1)
+
+plot_missing(icu_patients_df1)
+
+plot_bar(icu_patients_df1)
+
+plot_histogram(icu_patients_df1)
+
 
 
 ```
