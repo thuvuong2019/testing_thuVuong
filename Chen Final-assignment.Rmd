@@ -144,7 +144,7 @@ target="_blank">
 ##Accessing the Data
 The data frame can be loaded with the following code:
 
-```
+```{r}
 icu_patients_df0 <- readRDS("icu_patients_df0.rds")
 icu_patients_df1 <- readRDS("icu_patients_df1.rds")
 ```
@@ -157,6 +157,28 @@ In this task, you are required to develop a logistic regression model using the 
 ### Hints
 
 1. Select an initial subset of explanatory variables that you will use to predict the risk of in-hospital death. Justify your choice.
+
+Albumin min
+ALP ALT AST max
+Bilirubin max
+BUN max
+Creatinine max
+HCO3 max min
+K max
+Urine min
+GCS min
+HR max
+NIsysABP max min
+Platelets min max
+FiO2 PaO2 SaO2 min
+PaCO2 max min
+weight diff
+
+
+```{r}
+summary(icu_patients_df1)
+```
+
 
 2. Conduct basic exploratory data analysis on your variables of choice.
 
