@@ -158,22 +158,6 @@ In this task, you are required to develop a logistic regression model using the 
 
 1. Select an initial subset of explanatory variables that you will use to predict the risk of in-hospital death. Justify your choice.
 
-Albumin min
-ALP ALT AST max
-Bilirubin max
-BUN max
-Creatinine max
-HCO3 max min
-K max
-Urine min
-GCS min
-HR max
-NIsysABP max min
-Platelets min max
-FiO2 PaO2 SaO2 min
-PaCO2 max min
-weight diff
-
 
 ```{r}
 summary(icu_patients_df1)
@@ -204,11 +188,263 @@ summary(icu_patients_df1)
 In this task, you are required to develop a Cox proportional hazards survival model using the `icu_patients_df1` data set which adequately explains or predicts the length of survival indicated by the `Days` variable, with censoring as indicated by the `Status` variable.  You should fit a series of models, maybe three or four, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. Aim for between five and ten predictor variables (slightly more or fewer is OK). It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct, but do you best). You should assess each model you consider for goodness of fit and other relevant statistics, and you should assess your final model for violations of assumptions and perform other diagnostics which you think are relevant (and modify the model if indicated, or at comment on the possible impact of what your diagnostics show). Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find.
 
 
+Import library
+```{r}
+library(dplyr)
+library(survival)
+library(survminer)
+```
+
+
+Clean the dataset
+```{r}
+clean <- function(var1, var2){
+  ifelse(is.na(var1), var2, var1)
+}
+
+df1_clean <- icu_patients_df1 %>% mutate(DiasABP_diff_clean = clean(DiasABP_diff, NIDiasABP_diff)) %>%
+                                  select(-DiasABP_diff, -NIDiasABP_diff) %>%
+                                  mutate(DiasABP_max_clean = clean(DiasABP_max, NIDiasABP_max)) %>%
+                                  select(-DiasABP_max, -NIDiasABP_max) %>%
+                                  mutate(DiasABP_min_clean = clean(DiasABP_min, NIDiasABP_min)) %>%
+                                  select(-DiasABP_min, -NIDiasABP_min) %>%
+                                  mutate(SysABP_diff_clean = clean(SysABP_diff, NISysABP_diff)) %>%
+                                  select(-SysABP_diff, -NISysABP_diff) %>%
+                                  mutate(SysABP_max_clean = clean(SysABP_max, NISysABP_max)) %>%
+                                  select(-SysABP_max, -NISysABP_max) %>%
+                                  mutate(SysABP_min_clean = clean(SysABP_min, NISysABP_min)) %>%
+                                  select(-SysABP_min, -NISysABP_min) %>%
+                                  mutate(MAP_diff_clean = clean(MAP_diff, NIMAP_diff)) %>%
+                                  select(-MAP_diff, -NIMAP_diff) %>%
+                                  mutate(MAP_max_clean = clean(MAP_max, NIMAP_max)) %>%
+                                  select(-MAP_max, -NIMAP_max) %>%
+                                  mutate(MAP_min_clean = clean(MAP_min, NIMAP_min)) %>%
+                                  select(-MAP_min, -NIMAP_min) 
+
+```
+
+With regards to blood pressure measurement, invasive measurement is more accuracy than noninvasive mearsurements. Therefore, if invasive blood pressure is recorded, we prefer this record rather than noninvasive record no matter it is recorded or not. However, if  invasive blood pressure is not recorded, we have no choice but choose noninvasive record.
+
+
 ### Hints
 
 1. Select an initial subset of explanatory variables that you will use to predict survival. Justify your choice.
 
+----Descriptor Variables:
+
+Age, Gender, ICUType: demograhpic variables and ICU type will be included in the explanatory variables.
+
+```{r}
+coxph(Surv(Days, Status) ~ Age, data = df1_clean)
+coxph(Surv(Days, Status) ~ Gender, data = df1_clean)
+coxph(Surv(Days, Status) ~ ICUType, data = df1_clean)
+```
+
+Results: all of them is statistical significance or close to. 
+
+----Clinical Information Variables:
+
+--Summary indicator
+
+SAPS1: the paper indicates that SAPS correctly classified patients in groups of increasing probability of death. However, it doesn't mention anything in terms of the relationship between SAPS and survival time. From the backgroud knowledge, there is no reason to exclude it from our modeling.
+
+SOFA score: another paper indicates that MOF score correlated to the mortality of critical patients. However, it doesn't mention anything in terms of the relationship between SAPS and survival time. From the backgroud knowledge, there is no reason to exclude it from our modeling.
+
+Conclusion: SAPS1 and SOFA will be part of the initial subset of explanatory variables. However, if the inclusion of SAPS1 and SOFA can not strongly increase the performance of the final model, they will be not in the final model.
+
+--Liver function indicator:
+
+Albumin_max: albumin is a marker for the goodness of liver function and it can be supplemented by injection. Therefore, if the maximum albumin amount were still low after treatment, the survival days of the patients would be shorter.
+
+ALP_min and Bilirubin_min: both of them are markers for not only the badness of liver function but also the severity of hemolysis. If the minimum amout of them were still high after treatment, the survival days of the patients would be shorter.
+
+ALT and AST: both of them are indicators for hepatocellular injury. The reason why it is not selected as initial explanatory variable is that they are easily affected by the medication prescribed by the ICU doctors.
+
+Conclusion: First of all, ALT and AST will be exculsive from the modeling, and the rest of them will be inclusive in the inital analysis. After analysing, one or two of them may remain depending on the results.
+
+
+```{r}
+coxph(Surv(Days, Status) ~ Albumin_max, data = df1_clean)
+coxph(Surv(Days, Status) ~ ALP_min, data = df1_clean)
+coxph(Surv(Days, Status) ~ Bilirubin_min, data = df1_clean)
+coxph(Surv(Days, Status) ~ Albumin_max + ALP_min, data = df1_clean)
+coxph(Surv(Days, Status) ~ Albumin_max + Bilirubin_min, data = df1_clean)
+```
+
+Results: All of the variables is statistical significance.
+
+```{r}
+loglik <- c(summary(coxph(Surv(Days, Status) ~ Albumin_max, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ ALP_min, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ Bilirubin_min, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ Albumin_max + ALP_min, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ Albumin_max + Bilirubin_min, data = df1_clean))$loglik[2])
+
+names(loglik) <- c('Albumin_max','ALP_min','Bilirubin_min','Albumin_max + ALP_min','Albumin_max + Bilirubin_min')
+
+loglik
+```
+
+Results: with regards to maximum log-likelihood value, the combination of Albumin_max and Bilirubin_min has better performance. Therefore, Albumin_max and Bilirubin_min will be putted into multivariable model.
+
+--Kidney function indicator:
+
+Creatinine_min ,BUN_min: both of them are marker for the badness of kidney function and it can be decreased by blood purification. Therefore, if the minimum amount of them were still high after treatment, the survival days of the patients would be shorter.
+
+Urine_max: Unrine output is a marker for not only kidney function but also the amount of bleeding. However, it might be not accurate within one-day record. Therefore, it will be exculsive from the initial analysis
+
+Conclusion: Creatinine_min and BUN_min will be inclusive in the inital modeling, and one of them might be exclusive depending on the result from the analysis.
+
+```{r}
+coxph(Surv(Days, Status) ~ Creatinine_min, data = df1_clean)
+coxph(Surv(Days, Status) ~ BUN_min, data = df1_clean)
+coxph(Surv(Days, Status) ~ Creatinine_min + BUN_min, data = df1_clean)
+```
+
+Results: All of the variables is statistical significance.
+
+```{r}
+loglik <- c(summary(coxph(Surv(Days, Status) ~ Creatinine_min, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ BUN_min, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ Creatinine_min + BUN_min, data = df1_clean))$loglik[2])
+
+names(loglik) <- c('Creatinine_min', 'BUN_min', 'Creatinine_min + BUN_min')
+
+loglik
+``` 
+
+Results: with regards to the maximum log-likelihood value, the model including BUN_min has better performance comapred to the model including Creatinine_min, and the performance of the combined model is slightly better than the BUN_min model. Therfore, the BUN_min variable will be putted into multivariable model.
+
+--Central nervous function indicator:
+
+GCS_max: GSC score is a marker for the goodness of central nervous function. If the maximum score were still low after treatment, the survival days of the patients would be shorter.
+
+Conclusion: GCS_max will be inclusive in the initial analysis.
+
+```{r}
+coxph(Surv(Days, Status) ~ GCS_max, data = df1_clean)
+summary(coxph(Surv(Days, Status) ~ GCS_max, data = df1_clean))$loglik[2]
+```
+
+Results: GCS_max will be putted into multivariable model.
+
+--Cardiovascular function indicator:
+
+TropI_max and TropT_max: both of them are markers to assess the severity of myocardial damage, and the concentration of them are proportional to the the severity. If the maximum level of them is pretty high, the risk of death because of heart failure will be increasing, leading to the shorter survival time. Therefore, one of them will be chosed depding on the univariable analysis.
+
+Heart rate: it will be not inclusive in the model analysis because it is easily affected by medication, other treatment and the mood of patient.
+
+MAP_max_clean and MAP_min_clean: both of them are essential to assess the cardiovascular funtion.
+
+
+
+```{r}
+coxph(Surv(Days, Status) ~ TroponinI_max, data = df1_clean)
+coxph(Surv(Days, Status) ~ TroponinT_max, data = df1_clean)
+coxph(Surv(Days, Status) ~ MAP_max_clean, data = df1_clean)
+coxph(Surv(Days, Status) ~ MAP_min_clean, data = df1_clean)
+coxph(Surv(Days, Status) ~ MAP_max_clean + TroponinT_max, data = df1_clean)
+coxph(Surv(Days, Status) ~ MAP_min_clean + TroponinT_max, data = df1_clean)
+coxph(Surv(Days, Status) ~ MAP_max_clean + MAP_min_clean + TroponinT_max, data = df1_clean)
+```
+
+Results: all of the variables except TroponinI_max is statistical significance.
+
+```{r}
+loglik <- c(summary(coxph(Surv(Days, Status) ~ TroponinT_max, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ MAP_max_clean, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ MAP_min_clean, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ MAP_max_clean + TroponinT_max, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ MAP_min_clean + TroponinT_max, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ MAP_max_clean + MAP_min_clean + TroponinT_max, 
+                          data = df1_clean))$loglik[2])
+
+names(loglik) <- c('TroponinT_max', 'MAP_max_clean', 'MAP_min_clean', 'MAP_max_clean + TroponinT_max', 
+                   'MAP_min_clean + TroponinT_max', 'MAP_max_clean + MAP_min_clean + TroponinT_max')
+
+loglik
+```
+
+Results: based on the maximum log-likelihood, model consisting of MAP_max_clean, MAP_min_clean and TroponinT_max will be in favour.
+
+--Respiratory function indicator:
+
+RespRate: Respiratory rates are affected by the overall level of PaCO2 and PaO2, therefore, it will no be inclusive in the explanatory variables.
+
+FiO2: almost all of the patients in ICU will get the inspired O2 treatment. Therefore, this variable is not trustful.
+
+SaO2: it is affected by PaO2 in most of the time.
+
+PaO2_max: PaO2 is a marker for the goodness of the respiratory function. If the maximum amount of PaO2 is still low after treatment, the survival time of a patient will be shorter.
+
+PaCO2_diff: PaCO2 is a sensitive marker for assessing gas exchange inside the lungs. If the extreme value of PaCO2 is far away from the mean value, it means higher probability of a patient lack of breathing.
+
+```{r}
+coxph(Surv(Days, Status) ~ PaO2_max, data = df1_clean)
+coxph(Surv(Days, Status) ~ PaCO2_diff, data = df1_clean)
+coxph(Surv(Days, Status) ~ PaO2_max + PaCO2_diff, data = df1_clean)
+```
+
+Results:  All of the variables is statistical significance.
+
+```{r}
+loglik <- c(summary(coxph(Surv(Days, Status) ~ PaO2_max, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ PaCO2_diff, data = df1_clean))$loglik[2],
+            summary(coxph(Surv(Days, Status) ~ PaO2_max + PaCO2_diff, data = df1_clean))$loglik[2])
+
+names(loglik) <- c('PaO2_max', 'PaCO2_diff', 'PaO2_max + PaCO2_diff')
+
+loglik
+```
+
+Results: with regards to the maximum log-likelihood value, model combined of PaO2_max and PaCO2_diff has the best performance. Therefore, PaO2_max and PaCO2_diff will be putted into multivariable model.
+
+--Coagulation function indicator:
+
+Platelets_max: platelets ia a marker for the goodness of coagulation function and it can be supplemented by injection. Therefore, if the maximum platelets amount were still low after treatment, the survival days of the patients would be shorter.
+
+```{r}
+coxph(Surv(Days, Status) ~ Platelets_max, data = df1_clean)
+summary(coxph(Surv(Days, Status) ~ Platelets_max, data = df1_clean))$loglik[2]
+```
+
+Results: although Platelets_max is not statistical significance, it will be still part of the multivariable because it is the only variable provided to assess coagulation function.
+
+--Infection indicator
+
+WBC_min: it is a indicator for the severity of infection. If the minimum amount of WBC is still high after using antibiotic, then the survival time will be shorter.
+
+body temperature: it is less trustful compared to WBC because it might be affected by the enviornmental tempeture, BMI, stress reaction and adverse effect of medications.
+
+--Blood biochemistry results
+
+Blood biochemistry results in one-day record will be less trustful. Morever, the blood biochemistry results are some kind of comprehensive results from the liver function, kidney funciton and respirtory function. Therefore, they will be not in the explanatory variables.
+
+
+```{r}
+summary(coxph(Surv(Days, Status) ~ Age + Gender + ICUType + Albumin_max + Bilirubin_min + BUN_min + 
+                GCS_max + MAP_max_clean + MAP_min_clean + TroponinT_max + PaO2_max + 
+                PaCO2_diff + Platelets_max + WBC_min + SAPS1 + SOFA, data = df1_clean))
+```
+
+
+
+
+
+
+
+
+
+
+
 2. Conduct basic exploratory data analysis on your variables of choice.
+
+```{r}
+df1_clean %>% select(Age, Gender, ICUType, Albumin_max, Bilirubin_min, BUN_min,
+                GCS_max, MAP_max_clean, MAP_min_clean, TroponinT_max, PaO2_max,
+                PaCO2_diff, Platelets_max, WBC_min, SAPS1, SOFA) %>% summary
+```
+
 
 3. Fit appropriate univariate Cox proportional hazards models.
 
