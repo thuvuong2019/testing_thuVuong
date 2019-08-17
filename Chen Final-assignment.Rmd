@@ -445,6 +445,12 @@ df1_clean %>% select(Age, Gender, ICUType, Albumin_max, Bilirubin_min, BUN_min,
                 PaCO2_diff, Platelets_max, WBC_min, SAPS1, SOFA) %>% summary
 ```
 
+Obviously the range of SOFA variable is out of range cause its allowable entry is ranging from 0 to 24. Therefore, some cleaning work is required.
+
+```{r}
+df1_clean[df1_clean$SOFA == -1,]$SOFA = NA
+```
+
 
 3. Fit appropriate univariate Cox proportional hazards models.
 
