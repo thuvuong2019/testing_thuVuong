@@ -221,6 +221,10 @@ df1_clean <- icu_patients_df1 %>% mutate(DiasABP_diff_clean = clean(DiasABP_diff
                                   mutate(MAP_min_clean = clean(MAP_min, NIMAP_min)) %>%
                                   select(-MAP_min, -NIMAP_min) 
 
+range(df1_clean$SOFA)
+
+df1_clean[df1_clean$SOFA == -1,]$SOFA = NA
+
 ```
 
 
