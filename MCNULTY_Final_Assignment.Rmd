@@ -282,21 +282,21 @@ In this task, you are required to develop a logistic regression model using the 
 1. Conduct basic exploratory data analysis on your variables of choice.
 
 
-_First objectives are to assess the properties of our data, and determine which variables are correlated or clinically relevant_
-
+_First objectives are to assess the properties of our data, and determine which variables are correlated and assess univariate predictor variable + outcome variable relationships._
 
 ```{r} 
 #subset our variables which were deemed clinically relevant
 glm_analysis_df <- df1_clean[, c("in_hospital_death", "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")]
 ```
 
-_Check for correlations within our selected variables. Including highly correlated predictor variables may confound our model.
+
+_Check for correlations within our selected variables. Including highly correlated predictor variables may confound our model._
 
 ```{r}
 plot_correlation(glm_analysis_df, maxcat = 5L, type = "d")
 ```
 
-_Most ICU admissions are negatively correlated with other ICU admissions. This is intuitive as it is rare to require multiple different ICU admissions except in complex patients. Cardiac Surgery Recovery ICU and Surgical ICU are the most negatively correlated at -0.46._
+_Most ICU admissions are negatively correlated with other ICU admissions. This is intuitive as it is rare to require multiple different ICU admissions except in complex patients. Cardiac Surgery Recovery ICU and Surgical ICU are the most negatively correlated at -0.46. Gender is binary, there are no problematic correlations here._
 
 ```{r}
 plot_correlation(na.omit(glm_analysis_df), maxcat = 5L, type = "c")
@@ -304,6 +304,17 @@ plot_correlation(na.omit(glm_analysis_df), maxcat = 5L, type = "c")
 
 _investigation of relationships between "in_hospital_death" and chosen predictor variables._
 
+```{r}
+#put column names into a variable 
+vars <- c("Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")
+
+for(i in 2:length(glm_analysis_df)) {
+  plot <- ggplot(glm_analysis_df, aes(x = glm_analysis_df[[i]], y = in_hospital_death)) +
+    geom_point()
+  print(plot)
+}
+
+```
 
 
 
@@ -312,7 +323,7 @@ _investigation of relationships between "in_hospital_death" and chosen predictor
 ###Univariate Modelling
 
 ```{r echo=TRUE}
-#put column names into a variable 
+#repeat column names for readability
 vars <- c("Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")
 
 univariate_mods <- c() #initialise an empty list of vectors for the loop
