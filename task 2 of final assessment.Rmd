@@ -200,13 +200,6 @@ skim(icu_patients_df1) %>% skimr::kable()
 _Most variables have been cleaned using the preliminary data-prep associated with this assignment. However, we can see that most of the continuous variables contain a few extreme maximum values and the majority of the data is not missing. A few specific variables such as DiasABP, Height, NI-pathology results, and SysABP measures are worth investigating._
 
 
-_We can also drop columns such as survival and status which are not related to the GLM analysis._
-
-```{r}
-icu_patients_df1 <- subset(icu_patients_df1, select = -c(Status, Survival, Days, Length_of_stay))
-```
-
-
 ```{r}
 missing_rates<- profile_missing(icu_patients_df1) %>% arrange(desc(num_missing))
 
@@ -277,7 +270,7 @@ plot_correlation(na.omit(df1_clean), maxcat = 5L, type = "d")
 _Most ICU admissions are negatively correlated with other ICU admissions. This is intuative as it is rare to require multiple different ICU admissions except in complex patients. Cardiac Surgery Recovery ICU and Surgical ICU are the most negatively correlated at -0.46._
 
 ```{r}
-plot_correlation(na.omit(icu_patients_df1), maxcat = 5L, type = "c")
+plot_correlation(na.omit(df1_clean), maxcat = 5L, type = "c")
 ```
 
 A few key relationships stick out between variables looking at this graph:
@@ -365,7 +358,7 @@ From this graph we can make a preliminary assessement about which predictor vari
 
 
 ```{r} 
-analysis_df <- icu_patients_df1[, c("in_hospital_death", "Age", "Gender", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "MAP_max", "MAP_min", "PaO2_max", "PaCO2_diff", "Platelets_max", "Creatinine_max", "WBC_min")]
+glm_analysis_df <- df1_clean[, c("in_hospital_death", "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")]
 ```
 
 _investigation of relationships between "in_hospital_death" and chosen predictor variables._
@@ -377,13 +370,13 @@ _investigation of relationships between "in_hospital_death" and chosen predictor
 
 ```{r echo=TRUE}
 #put column names into a variable 
-vars <- c("in_hospital_death", "Age", "Gender", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "MAP_max", "MAP_min", "PaO2_max", "PaCO2_diff", "Platelets_max", "Creatinine_max", "WBC_min")
+vars <- c("Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")
 
 univariate_mods <- c() #initialise an empty list of vectors for the loop
 
 for(i in vars){
   modelformula <- paste0("in_hospital_death ~ ", i) #use for loop iterator to create a formula for each variable
-  univariate_mods[[i]] <- glm(as.formula(modelformula), data = analysis_df, family = "binomial")
+  univariate_mods[[i]] <- glm(as.formula(modelformula), data = glm_analysis_df, family = "binomial")
 }
 
 for(i in univariate_mods){
@@ -391,15 +384,28 @@ for(i in univariate_mods){
 }
 ```
 
-_SaO2, Weight, and Height Variables were not sigificant. Retain Weight and Height as these are standard to include in medical modelling._
+_Gender, TroponinI_max, WBC_min, Platelets_max Variables were not sigificant. Other than Gender - We retain only the signficant variables within the univariate models for the multivariate modelling in subsequent analysis. Gender is retained as a standard variable to include within medical modelling._
 
 4. Fit an appropriate series of multivariable logistic regression models, justifying your approach. Assess each model you consider for goodness of fit and other relevant statistics.
 
-###Multivariate
+###Multivariate Modelling
 
 ```{r}
 #put column names into a variable 
-categorical_vars <- paste(c("Albumin_min", "Bilirubin_max", "Creatinine_max", "HCO3_diff", "SAPS1", "BUN_min", "GCS_max", "pH_min", "Glucose_max", "Height", "Weight_diff"), collapse = " + ")
+multivariate_vars <- paste(c( "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinT_max", "PaO2_max", "PaCO2_diff"), collapse = " + ")
+
+modelformula <- paste("in_hospital_death ~ ", multivariate_vars)
+
+multivariate_mod <- glm(modelformula, data = glm_analysis_df, family = "binomial")
+
+summary(multivariate_mod)
+```
+
+_
+
+```{r}
+#put column names into a variable 
+categorical_vars <- paste(c( "Age", "ICUType", "SAPS1", "SOFA", "Creatinine_max", "BUN_min", "GCS_max", "PaO2_max"), collapse = " + ")
 
 modelformula <- paste("in_hospital_death ~ ", categorical_vars)
 
@@ -407,6 +413,8 @@ multivariate_mod <- glm(modelformula, data = icu_patients_df1, family = "binomia
 
 summary(multivariate_mod)
 ```
+
+
 
 5. Present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge.
 
