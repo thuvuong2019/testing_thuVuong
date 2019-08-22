@@ -297,6 +297,10 @@ From this graph we can make a preliminary assessement about which predictor vari
 
 * Standard to include within medical modelling.
 
+3. ICU category - ICUType
+
+*
+
 3. SAPS-I score - SAPS1
 
 * This scoring system was created using 14 biological/clincial indicators Specifically for ICU paitents facilitate multicentre studies and outcome comparisons.
@@ -360,12 +364,8 @@ From this graph we can make a preliminary assessement about which predictor vari
 
 
 
-###Scatterplot 
-
-```{r}
-arr_delay_df2 <- icu_patients_df1[, c("in_hospital_death", "Age", "Gender", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "MAP_max", "MAP_min", "PaO2_max", "PaCO2_diff", "Platelets_max", "Creatinine_max", "WBC_min")]
-
-plot_scatterplot(arr_delay_df2, by = "in_hospital_death", sampled_rows = 1000L)
+```{r} 
+analysis_df <- icu_patients_df1[, c("in_hospital_death", "Age", "Gender", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "MAP_max", "MAP_min", "PaO2_max", "PaCO2_diff", "Platelets_max", "Creatinine_max", "WBC_min")]
 ```
 
 _investigation of relationships between "in_hospital_death" and chosen predictor variables._
@@ -377,13 +377,13 @@ _investigation of relationships between "in_hospital_death" and chosen predictor
 
 ```{r echo=TRUE}
 #put column names into a variable 
-categorical_vars <- c("Albumin_min", "Bilirubin_max", "Creatinine_max", "HCO3_diff", "SAPS1", "BUN_min", "GCS_max", "pH_min", "Glucose_max", "SaO2_max", "Height", "Weight_diff")
+vars <- c("in_hospital_death", "Age", "Gender", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "MAP_max", "MAP_min", "PaO2_max", "PaCO2_diff", "Platelets_max", "Creatinine_max", "WBC_min")
 
 univariate_mods <- c() #initialise an empty list of vectors for the loop
 
-for(i in categorical_vars){
+for(i in vars){
   modelformula <- paste0("in_hospital_death ~ ", i) #use for loop iterator to create a formula for each variable
-  univariate_mods[[i]] <- glm(as.formula(modelformula), data = icu_patients_df1, family = "binomial")
+  univariate_mods[[i]] <- glm(as.formula(modelformula), data = analysis_df, family = "binomial")
 }
 
 for(i in univariate_mods){
@@ -413,13 +413,6 @@ summary(multivariate_mod)
 6. For your final model, present a set of diagnostic statistics and/or charts and comment on them.
 
 7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
-
-
-
-
-#NOTES
-
-- we may want to revise variable selection based upon some predictor variable correlations eg. BUN and creatinine.
 
 
 
