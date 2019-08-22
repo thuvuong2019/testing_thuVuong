@@ -140,6 +140,24 @@ target="_blank">
 <li>
 <em>Weight</em> (kg)</li>
 
+##Load Libraries
+
+```{r warning=FALSE, include=FALSE}
+#Set up Libraries
+list.of.packages <- c("ggplot2", "Rcpp", "DataExplorer", "skimr", "knitr", "DataExplorer")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+
+library(tidyverse)
+library(magrittr)
+library(DataExplorer)
+library(skimr)
+library(knitr)
+library(DataExplorer)
+
+```
+
 
 ##Accessing the Data
 The data frame can be loaded with the following code:
@@ -154,45 +172,45 @@ icu_patients_df1 <- readRDS("icu_patients_df1.rds")
 In this task, you are required to develop a logistic regression model using the `icu_patients_df1` data set which adequately explains or predicts the `in_hospital_death` variable as the outcome using a subset of the available predictor variables. You should fit a series of models, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct or complete, but do you best). Aim for between five and ten predictor variables (slightly more or fewer is OK). You should assess each model you consider for goodness of fit and other relevant statistics to help you choose between them. For your final model, present a set of diagnostic statistics and/or charts and comment on them. You don't need to do an exhaustive exploratory data analysis of all the variables in the data set, but you should examine those variables that you use in your model. Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find compared to the same model fitted to the imputed data. 
 
 
-### Hints
+## GLM Task
 
-1. Select an initial subset of explanatory variables that you will use to predict the risk of in-hospital death. Justify your choice.
+1. Conduct basic exploratory data analysis on your variables of choice.
 
+_First objectives are to assess the properties of our data, assess the data quality, and lastly determine which variables are correlated or clinically relevant_
+
+Key take aways from the data prep explaination:
+
+* Patients with a total ICU stay less than 48 hours have been excluded. Of these patients we are looking at only the first 24 hours of the patient's stay in ICU
+* Patients with DNR (do not resuscitate) or CMO (comfort measures only) directives were not excluded.
+* Up to 42 variables were recorded at least once during the first 48 hours after admission to the ICU. Not all variables are available in all cases, however. Six of these variables are general descriptors (collected on admission), and the remainder are time series, for which multiple observations may be available.
+..* Observations with multiple measures are summarised to give maximum, minimum values etc. for the first 24 hours in ICU.
+..* Observations captured at admission are:
+....1 RecordID (a unique integer for each ICU stay)
+
+
+
+###Initial look at our data
+
+
+```{r results='asis'}
+options(max.print=999999)
+skim(icu_patients_df1) %>% skimr::kable()
+```
+
+_Most variables have been cleaned using the preliminary data-prep associated with this assignment. However, we can see that most of the continuous variables contain a few extreme maximum values and the majority of the data is not missing. A few specific variables such as DiasABP, Height, NI-pathology results, and SysABP measures are worth investigating._
+
+
+_We can also drop columns such as survival and status which are not related to the GLM analysis._
 
 ```{r}
-summary(icu_patients_df1)
+icu_patients_df1 <- subset(icu_patients_df1, select = -c(Status, Survival, Days, Length_of_stay))
 ```
 
 
-2. Conduct basic exploratory data analysis on your variables of choice.
-
-3. Fit appropriate univariate logistic regression models.
-
-4. Fit an appropriate series of multivariable logistic regression models, justifying your approach. Assess each model you consider for goodness of fit and other relevant statistics.
-
-5. Present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge.
-
-6. For your final model, present a set of diagnostic statistics and/or charts and comment on them.
-
-7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
-
-
-
-#####
-**Create your response to this task here, as a mixture of embedded (`knitr`) R code and any resulting outputs, and explanatory or commentary text.** 
-
-
-
-# Task 2 (15 marks)
-
-In this task, you are required to develop a Cox proportional hazards survival model using the `icu_patients_df1` data set which adequately explains or predicts the length of survival indicated by the `Days` variable, with censoring as indicated by the `Status` variable.  You should fit a series of models, maybe three or four, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. Aim for between five and ten predictor variables (slightly more or fewer is OK). It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct, but do you best). You should assess each model you consider for goodness of fit and other relevant statistics, and you should assess your final model for violations of assumptions and perform other diagnostics which you think are relevant (and modify the model if indicated, or at comment on the possible impact of what your diagnostics show). Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find.
-
-
 ```{r}
-#Import library
-library(dplyr)
-library(survival)
-library(survminer)
+missing_rates<- profile_missing(icu_patients_df1) %>% arrange(desc(num_missing))
+
+missing_rates[1:25,]
 ```
 
 
@@ -224,7 +242,203 @@ df1_clean <- icu_patients_df1 %>% mutate(DiasABP_diff_clean = clean(DiasABP_diff
 range(df1_clean$SOFA)
 
 df1_clean[df1_clean$SOFA == -1,]$SOFA = NA
+```
 
+
+###Check Our discrete variables
+
+
+```{r}
+plot_bar(df1_clean)
+```
+
+
+###Check continuous variables
+
+
+```{r}
+plot_histogram(df1_clean)
+```
+
+
+
+2. Select an initial subset of explanatory variables that you will use to predict the risk of in-hospital death. Justify your choice.
+
+
+
+###Look at discrete variable correlations
+
+
+
+```{r}
+plot_correlation(na.omit(df1_clean), maxcat = 5L, type = "d")
+```
+
+_Most ICU admissions are negatively correlated with other ICU admissions. This is intuative as it is rare to require multiple different ICU admissions except in complex patients. Cardiac Surgery Recovery ICU and Surgical ICU are the most negatively correlated at -0.46._
+
+```{r}
+plot_correlation(na.omit(icu_patients_df1), maxcat = 5L, type = "c")
+```
+
+A few key relationships stick out between variables looking at this graph:
+
+* The 'Creatinine' variables (min, dif, max) are positively correlated with corresponding 'BUN' Blood Urea Nitrogen variables.
+* Systolic ABP values are positively correlated with corresponding Diasystolic ABP values with corresponding MAP values (especially the minimum values).
+
+
+From this graph we can make a preliminary assessement about which predictor variables will be suitable for logistic regression analysis. We can select for predictor variables which are not highly correlated with each other, but are correlated with our 'in_hospital_death' outcome variable.
+
+
+\*Note that as a team we have decieded to select similar variables for both the survival analysis and Linear modelling portions of the assessment due to the clinical relevance of these variables as both survival and death predictors. However, within each modelling task different categories of these variables have been selected (eg. Creatinine_max in linear modelling rather than Creatinine_min used in our survival analysis). This was based upon preliminary exploratory data analysis.
+
+1. Age (years) - Age
+
+2. Gender (0: female, or 1: male) - Gender
+
+* Standard to include within medical modelling.
+
+3. SAPS-I score - SAPS1
+
+* This scoring system was created using 14 biological/clincial indicators Specifically for ICU paitents facilitate multicentre studies and outcome comparisons.
+* Positively correlated with in_hospital_death.
+
+4. SOFA Score - SOFA
+
+* 
+
+5. Albumin min - Albumin_min
+
+*no strong correlations between other predictor variables, other than other ablumin variables eg. Albumin_max - which we will not include in the analysis.
+
+6. Serum creatinine (mg/dL) - Creatinine_max
+
+* High levels (above 250) are a clincial indicator of renal failure, which is a very serious complication somtimes requiring dialysis.
+* strongly Correlated with BUN but also weakly correlated with in_hospital_death.
+
+7. Blood urea nitrogen (mg/dL) - BUN min
+
+* Predictor of kindey impairment
+
+8. Glasgow Comas Score - GCS_max
+
+* The Glasgow Coma Scale provides a score in the range 3-15; patients with scores of 3-8 are usually said to be in a coma.
+* Strongly Negatively correlated with in_hospital_death
+
+9. Troponin I - TroponinI_max
+
+* Predictor of cardiovascular impairment, Troponin in released from the heart myocardium and is indicative of damage to the heart.
+
+10. Troponin T - TroponinT_max
+
+* 
+
+11. MAP_max
+
+12. MAP_min
+
+13. Arterial O2 Concentration (%) - PaO2_max
+
+* Oxygen Concentration in blood vessels transporting oxygenated blood to the body.
+* Negatively correlated with in_hospital_death.
+
+14. Arterial CO2 Concentration (%) - PaCO2_diff
+
+15. Platelets - Platelets_max
+
+* 
+
+16. Serum creatinine (mg/dL) - Creatinine_max
+
+* High levels (above 250) are a clincial indicator of renal failure, which is a very serious complication somtimes requiring dialysis.
+* strongly Correlated with BUN but also weakly correlated with in_hospital_death.
+
+17. Infection Indicator - WBC_min
+
+* indicator for infection
+* Negatively correlated with in_hospital_death.
+
+
+
+
+###Scatterplot 
+
+```{r}
+arr_delay_df2 <- icu_patients_df1[, c("in_hospital_death", "Age", "Gender", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "MAP_max", "MAP_min", "PaO2_max", "PaCO2_diff", "Platelets_max", "Creatinine_max", "WBC_min")]
+
+plot_scatterplot(arr_delay_df2, by = "in_hospital_death", sampled_rows = 1000L)
+```
+
+_investigation of relationships between "in_hospital_death" and chosen predictor variables._
+
+
+3. Fit appropriate univariate logistic regression models.
+
+###Univariate
+
+```{r echo=TRUE}
+#put column names into a variable 
+categorical_vars <- c("Albumin_min", "Bilirubin_max", "Creatinine_max", "HCO3_diff", "SAPS1", "BUN_min", "GCS_max", "pH_min", "Glucose_max", "SaO2_max", "Height", "Weight_diff")
+
+univariate_mods <- c() #initialise an empty list of vectors for the loop
+
+for(i in categorical_vars){
+  modelformula <- paste0("in_hospital_death ~ ", i) #use for loop iterator to create a formula for each variable
+  univariate_mods[[i]] <- glm(as.formula(modelformula), data = icu_patients_df1, family = "binomial")
+}
+
+for(i in univariate_mods){
+  print(summary(i))
+}
+```
+
+_SaO2, Weight, and Height Variables were not sigificant. Retain Weight and Height as these are standard to include in medical modelling._
+
+4. Fit an appropriate series of multivariable logistic regression models, justifying your approach. Assess each model you consider for goodness of fit and other relevant statistics.
+
+###Multivariate
+
+```{r}
+#put column names into a variable 
+categorical_vars <- paste(c("Albumin_min", "Bilirubin_max", "Creatinine_max", "HCO3_diff", "SAPS1", "BUN_min", "GCS_max", "pH_min", "Glucose_max", "Height", "Weight_diff"), collapse = " + ")
+
+modelformula <- paste("in_hospital_death ~ ", categorical_vars)
+
+multivariate_mod <- glm(modelformula, data = icu_patients_df1, family = "binomial")
+
+summary(multivariate_mod)
+```
+
+5. Present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge.
+
+6. For your final model, present a set of diagnostic statistics and/or charts and comment on them.
+
+7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
+
+
+
+
+#NOTES
+
+- we may want to revise variable selection based upon some predictor variable correlations eg. BUN and creatinine.
+
+
+
+
+#####
+**Create your response to this task here, as a mixture of embedded (`knitr`) R code and any resulting outputs, and explanatory or commentary text.** 
+
+
+
+# Task 2 (15 marks)
+
+In this task, you are required to develop a Cox proportional hazards survival model using the `icu_patients_df1` data set which adequately explains or predicts the length of survival indicated by the `Days` variable, with censoring as indicated by the `Status` variable.  You should fit a series of models, maybe three or four, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. Aim for between five and ten predictor variables (slightly more or fewer is OK). It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct, but do you best). You should assess each model you consider for goodness of fit and other relevant statistics, and you should assess your final model for violations of assumptions and perform other diagnostics which you think are relevant (and modify the model if indicated, or at comment on the possible impact of what your diagnostics show). Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find.
+
+
+```{r}
+#Import library
+library(dplyr)
+library(survival)
+library(survminer)
 ```
 
 
