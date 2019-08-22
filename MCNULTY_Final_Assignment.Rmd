@@ -3,7 +3,6 @@ title: "HDAT9600 Final Assignment"
 author: 'McNULTY: Rory, Chen, Udoy, and Thu'
 date: "23 August 2019"
 output:
-  pdf_document: default
   html_document: default
 subtitle: 'Submission deadline is 5pm Friday 23 2019 '
 ---
@@ -378,19 +377,26 @@ multivariate_mod <- glm(modelformula, data = glm_analysis_df, family = "binomial
 summary(multivariate_mod)
 ```
 
-_
+_With the exception of gender, Albumin_min, TroponinT_max, and PaCO2_diff variables were not significant and are removed to create a simplified/reduced multivariate model._
 
 ```{r}
 #put column names into a variable 
-categorical_vars <- paste(c( "Age", "ICUType", "SAPS1", "SOFA", "Creatinine_max", "BUN_min", "GCS_max", "PaO2_max"), collapse = " + ")
+reduced_multivariate_vars <- paste(c( "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Creatinine_max", "BUN_min", "GCS_max", "PaO2_max"), collapse = " + ")
 
-modelformula <- paste("in_hospital_death ~ ", categorical_vars)
+modelformula <- paste("in_hospital_death ~ ", reduced_multivariate_vars)
 
-multivariate_mod <- glm(modelformula, data = icu_patients_df1, family = "binomial")
+reduced_multivariate_mod <- glm(modelformula, data = glm_analysis_df, family = "binomial")
 
-summary(multivariate_mod)
+summary(reduced_multivariate_mod)
 ```
 
+_All variables are now significant with the exception of gender, the next step is to compare with our more complex multivariate model with an analysis of deviance. We can already see the AIC score is lower for our reduced model._
+
+```{r}
+print(anova(reduced_multivariate_mod, multivariate_mod, test="Chi")) #test to see if reduced model is significantly different from the more complex model.
+```
+
+_There appears to be no significant difference between the reduced model and complex model (p > 0.05). We can therefore retain the simplified model._
 
 
 5. Present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge.
