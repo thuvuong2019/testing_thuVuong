@@ -305,7 +305,7 @@ From this graph we can make a preliminary assessement about which predictor vari
 * Haemoglobin oxygen saturation
 * Negatively correlated with in_hospital_death.
 
-13. Height (cm) - Height
+13. Gender (0: female, or 1: male) - Gender
 
 * Standard to include within medical modelling.
 
@@ -314,11 +314,13 @@ From this graph we can make a preliminary assessement about which predictor vari
 * Greatest difference in weight throughout the stay
 * Standard to include within medical modelling.
 
+15. Age (years) - Age
+
 
 ###Scatterplot 
 
 ```{r}
-arr_delay_df2 <- icu_patients_df1[, c("in_hospital_death", "Albumin_min", "Bilirubin_max", "Creatinine_max", "HCO3_diff", "SAPS1", "BUN_min", "GCS_max", "pH_min", "Glucose_max", "SaO2_max", "Height", "Weight_diff")]
+arr_delay_df2 <- icu_patients_df1[, c("in_hospital_death", "Albumin_min", "Bilirubin_max", "Creatinine_max", "HCO3_diff", "SAPS1", "BUN_min", "GCS_max", "pH_min", "Glucose_max", "SaO2_max", "Gender", "Weight_diff", "Age")]
 
 plot_scatterplot(arr_delay_df2, by = "in_hospital_death", sampled_rows = 1000L)
 ```
