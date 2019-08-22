@@ -168,28 +168,6 @@ icu_patients_df0 <- readRDS("icu_patients_df0.rds")
 icu_patients_df1 <- readRDS("icu_patients_df1.rds")
 ```
 
-# Task 1 (15 marks)
-
-In this task, you are required to develop a logistic regression model using the `icu_patients_df1` data set which adequately explains or predicts the `in_hospital_death` variable as the outcome using a subset of the available predictor variables. You should fit a series of models, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct or complete, but do you best). Aim for between five and ten predictor variables (slightly more or fewer is OK). You should assess each model you consider for goodness of fit and other relevant statistics to help you choose between them. For your final model, present a set of diagnostic statistics and/or charts and comment on them. You don't need to do an exhaustive exploratory data analysis of all the variables in the data set, but you should examine those variables that you use in your model. Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find compared to the same model fitted to the imputed data. 
-
-
-## GLM Task
-
-1. Conduct basic exploratory data analysis on your variables of choice.
-
-_First objectives are to assess the properties of our data, assess the data quality, and lastly determine which variables are correlated or clinically relevant_
-
-Key take aways from the data prep explaination:
-
-* Patients with a total ICU stay less than 48 hours have been excluded. Of these patients we are looking at only the first 24 hours of the patient's stay in ICU
-* Patients with DNR (do not resuscitate) or CMO (comfort measures only) directives were not excluded.
-* Up to 42 variables were recorded at least once during the first 48 hours after admission to the ICU. Not all variables are available in all cases, however. Six of these variables are general descriptors (collected on admission), and the remainder are time series, for which multiple observations may be available.
-..* Observations with multiple measures are summarised to give maximum, minimum values etc. for the first 24 hours in ICU.
-..* Observations captured at admission are:
-....1 RecordID (a unique integer for each ICU stay)
-
-
-
 ###Initial look at our data
 
 
@@ -239,40 +217,21 @@ df1_clean[df1_clean$SOFA == -1,]$SOFA = NA
 ```
 
 
-###Check Our discrete variables
-
-
-```{r}
-plot_bar(df1_clean)
-```
-
-
-###Check continuous variables
-
-
-```{r}
-plot_histogram(df1_clean)
-```
-
-
-
 2. Select an initial subset of explanatory variables that you will use to predict the risk of in-hospital death. Justify your choice.
 
 
-```{r}
-plot_correlation(na.omit(df1_clean), maxcat = 5L, type = "d")
-```
-
-_Most ICU admissions are negatively correlated with other ICU admissions. This is intuative as it is rare to require multiple different ICU admissions except in complex patients. Cardiac Surgery Recovery ICU and Surgical ICU are the most negatively correlated at -0.46._
 
 
-A few key relationships stick out between variables looking at this graph:
+Key take aways from the Assignment data prep:
 
-* The 'Creatinine' variables (min, diff, max) are positively correlated with corresponding 'BUN' Blood Urea Nitrogen variables.
-* Systolic ABP values are positively correlated with corresponding Diasystolic ABP values with corresponding MAP values (especially the minimum values).
+* Patients with a total ICU stay less than 48 hours have been excluded. Of these patients we are looking at only the first 24 hours of the patient's stay in ICU
+* Patients with DNR (do not resuscitate) or CMO (comfort measures only) directives were not excluded.
+* Up to 42 variables were recorded at least once during the first 48 hours after admission to the ICU. Not all variables are available in all cases, however. Six of these variables are general descriptors (collected on admission), and the remainder are time series, for which multiple observations may be available.
+..* Observations with multiple measures are summarised to give maximum, minimum values etc. for the first 24 hours in ICU.
+..* Observations captured at admission are:
+....1 RecordID (a unique integer for each ICU stay)
 
 
-From this graph we can make a preliminary assessement about which predictor variables will be suitable for logistic regression analysis. We can select for predictor variables which are not highly correlated with each other, but are correlated with our 'in_hospital_death' outcome variable.
 
 
 Note that as a team we have decieded to select similar variables for both the survival analysis and Linear modelling portions of the assessment due to the clinical relevance of these variables as both survival and death predictors. However, within each modelling task different categories of these variables have been selected (eg. Creatinine_max in linear modelling rather than Creatinine_min used in our survival analysis). This was based upon preliminary exploratory data analysis.
@@ -313,34 +272,44 @@ Platelets_max: Platelets is a marker for the goodness of coagulation function an
 WBC_min: is a indicator for the severity of infection. If the minimum amount of WBC is still high after using antibiotic, then the survival time will be shorter.
 
 
-###Look at discrete variable correlations
+# Task 1 (15 marks)
+
+In this task, you are required to develop a logistic regression model using the `icu_patients_df1` data set which adequately explains or predicts the `in_hospital_death` variable as the outcome using a subset of the available predictor variables. You should fit a series of models, evaluating each one, before you present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge. It is perfectly acceptable to include predictor variables in your final model which are not statistically significant, as long as you justify their inclusion on medical or physiological grounds (you will not be marked down if your medical justification is not exactly correct or complete, but do you best). Aim for between five and ten predictor variables (slightly more or fewer is OK). You should assess each model you consider for goodness of fit and other relevant statistics to help you choose between them. For your final model, present a set of diagnostic statistics and/or charts and comment on them. You don't need to do an exhaustive exploratory data analysis of all the variables in the data set, but you should examine those variables that you use in your model. Finally, re-fit your final model to the unimputed data frame (`icu_patients_df0.rds`) and comment on any differences you find compared to the same model fitted to the imputed data. 
 
 
+## GLM Task
+
+1. Conduct basic exploratory data analysis on your variables of choice.
+
+
+_First objectives are to assess the properties of our data, and determine which variables are correlated or clinically relevant_
+
+
+```{r} 
+#subset our variables which were deemed clinically relevant
+glm_analysis_df <- df1_clean[, c("in_hospital_death", "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")]
+```
+
+_Check for correlations within our selected variables. Including highly correlated predictor variables may confound our model.
 
 ```{r}
-plot_correlation(na.omit(df1_clean), maxcat = 5L, type = "d")
+plot_correlation(glm_analysis_df, maxcat = 5L, type = "d")
 ```
 
 _Most ICU admissions are negatively correlated with other ICU admissions. This is intuitive as it is rare to require multiple different ICU admissions except in complex patients. Cardiac Surgery Recovery ICU and Surgical ICU are the most negatively correlated at -0.46._
 
 ```{r}
-plot_correlation(na.omit(icu_patients_df1), maxcat = 5L, type = "c")
-```
-
-
-
-
-
-```{r} 
-glm_analysis_df <- df1_clean[, c("in_hospital_death", "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")]
+plot_correlation(na.omit(glm_analysis_df), maxcat = 5L, type = "c")
 ```
 
 _investigation of relationships between "in_hospital_death" and chosen predictor variables._
 
 
+
+
 3. Fit appropriate univariate logistic regression models.
 
-###Univariate
+###Univariate Modelling
 
 ```{r echo=TRUE}
 #put column names into a variable 
@@ -392,16 +361,20 @@ summary(reduced_multivariate_mod)
 
 _All variables are now significant with the exception of gender, the next step is to compare with our more complex multivariate model with an analysis of deviance. We can already see the AIC score is lower for our reduced model._
 
+5. Present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge.
+
 ```{r}
 print(anova(reduced_multivariate_mod, multivariate_mod, test="Chi")) #test to see if reduced model is significantly different from the more complex model.
 ```
 
-_There appears to be no significant difference between the reduced model and complex model (p > 0.05). We can therefore retain the simplified model._
-
-
-5. Present your final model. Your final model should **not** include all the predictor variables, just a small subset of them, which you have selected based on statistical significance and/or background knowledge.
+_There appears to be no significant difference between the reduced model and complex model (p > 0.05). We can therefore retain the simplified model with a lower AIC._
 
 6. For your final model, present a set of diagnostic statistics and/or charts and comment on them.
+
+```{r}
+plot(reduced_multivariate_mod)
+```
+
 
 7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
 
