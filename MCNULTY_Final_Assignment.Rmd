@@ -408,6 +408,8 @@ plot(reduced_multivariate_mod)
 
 _The QQ-plot shows heavy skewing separated into 2 clusters. The first cluster follws the normality line perfectly, however takes a sharp deviation at the first theorretical quantile. The second cluster curves up and to the right, indicating the data is right skewed. This seems to be consistent with the "in_hospital_deaths" variable._
 
+###Odds Ratios
+
 _look at odds ratios of specific variables within the multivariate models._
 
 ```{r}
