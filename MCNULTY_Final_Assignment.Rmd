@@ -405,7 +405,6 @@ _There appears to be no significant difference between the reduced model and com
 plot(reduced_multivariate_mod)
 ```
 
-_investigat
 
 ###Odds ratios
 
