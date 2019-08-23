@@ -176,10 +176,15 @@ options(max.print=999999)
 skim(icu_patients_df1) %>% skimr::kable()
 ```
 
-_Most variables have been cleaned using the preliminary data-prep associated with this assignment. However, we can see that most of the continuous variables contain a few extreme maximum values and the majority of the data is not missing. A few specific variables such as DiasABP, Height, NI-pathology results, and SysABP measures are worth investigating._
+_Most variables have been cleaned using the preliminary data-prep associated with this assignment. However, we can see that most of the continuous variables contain a few extreme maximum values and the majority of the data is not missing. A few specific variables such as DiasABP, Height, NI-pathology results, and SysABP measures are worth investigating. Additionally the outcome variable for the GLm analysis "in_hospital_death" needs to be refactored as a factor variable._
 
 
 ```{r}
+#Change in_hospital_death to a factor variable
+icu_patients_df1$in_hospital_death <- factor(icu_patients_df1$in_hospital_death, levels = c(0:1), labels = c('survivor', 'died in-hospital'))
+
+
+
 missing_rates<- profile_missing(icu_patients_df1) %>% arrange(desc(num_missing))
 
 missing_rates[1:25,]
@@ -302,20 +307,34 @@ _Most ICU admissions are negatively correlated with other ICU admissions. This i
 plot_correlation(na.omit(glm_analysis_df), maxcat = 5L, type = "c")
 ```
 
+_likewise with continuous variables are mostly
+
+
+
+
 _investigation of relationships between "in_hospital_death" and chosen predictor variables._
 
 ```{r}
-#put column names into a variable 
-vars <- c("Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")
-
-for(i in 2:length(glm_analysis_df)) {
-  plot <- ggplot(glm_analysis_df, aes(x = glm_analysis_df[[i]], y = in_hospital_death)) +
-    geom_point()
-  print(plot)
-}
+## Call boxplot function
+plot_boxplot(glm_analysis_df, by = "in_hospital_death") 
 
 ```
 
+_From here we can see that there are a lot of outlier values which may skew the model, although a few variables such as the Age, Albumin, GCS, SOFA, and SAPS1 show some clear differences in median values when categorised by our outcome variable and do not contain many outliers. We can visualise the distributions more easily by using a facetted histogram of each predictor variable when categorised by our outcome variable._
+
+```{r}
+histogram_data <- select_if(glm_analysis_df, is.numeric) %>% cbind(glm_analysis_df["in_hospital_death"])
+
+for(i in 2:length(histogram_data)) {
+
+  plot <- ggplot(data=histogram_data, aes(x=histogram_data[[i]], fill=in_hospital_death)) + 
+      geom_histogram() + 
+      facet_grid(in_hospital_death ~ ., scales = "free") + 
+      labs(x=names(histogram_data[i]), y="In Hospital Death")
+  print(plot)
+  
+}
+```
 
 
 3. Fit appropriate univariate logistic regression models.
@@ -386,6 +405,17 @@ _There appears to be no significant difference between the reduced model and com
 plot(reduced_multivariate_mod)
 ```
 
+_look at odds ratios of specific variables within the multivariate models._
+
+```{r}
+betas <- coef(reduced_multivariate_mod)
+
+exp(betas)
+
+exp(cbind(OR = betas, confint(reduced_multivariate_mod)))
+```
+
+_We can see the variable with the greatest leaverage is the 'ICUTypeCardiac Surgery Recovery Unit', which significantly reduces the chances of in hosptial mortality. If a patient is admitted to the Cardiac Surgery Recovery Unit they are approximately 65% less likely to die within their hospital admission (1-0.35 = 65%)._
 
 7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
 
