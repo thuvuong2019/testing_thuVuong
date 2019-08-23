@@ -292,6 +292,8 @@ _First objectives are to assess the properties of our data, and determine which 
 ```{r} 
 #subset our variables which were deemed clinically relevant
 glm_analysis_df <- df1_clean[, c("in_hospital_death", "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Albumin_min", "Creatinine_max", "BUN_min", "GCS_max", "TroponinI_max", "TroponinT_max", "PaO2_max", "PaCO2_diff", "Platelets_max", "WBC_min")]
+
+glm_analysis_df <- na.omit(glm_analysis_df)
 ```
 
 
@@ -407,6 +409,19 @@ plot(reduced_multivariate_mod)
 
 
 _The QQ-plot shows heavy skewing separated into 2 clusters. The first cluster follws the normality line perfectly, however takes a sharp deviation at the first theorretical quantile. The second cluster curves up and to the right, indicating the data is right skewed. This seems to be consistent with the "in_hospital_deaths" variable._
+
+
+###ROC Curve
+
+```{r}
+probabilities <- predict(reduced_multivariate_mod, type=c("response"))
+glm_analysis_df$probabilities <- probabilities
+
+library(pROC)
+g <- roc(in_hospital_death ~ probabilities, data = glm_analysis_df)
+print(g) #print AUC
+plot(g)  #plot RoC
+```
 
 ###Odds Ratios
 
