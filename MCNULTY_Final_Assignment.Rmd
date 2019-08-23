@@ -325,7 +325,7 @@ _From here we can see that there are a lot of outlier values which may skew the 
 ```{r}
 histogram_data <- select_if(glm_analysis_df, is.numeric) %>% cbind(glm_analysis_df["in_hospital_death"])
 
-for(i in 2:length(histogram_data)) {
+for(i in 1:(length(histogram_data)-1)) {
 
   plot <- ggplot(data=histogram_data, aes(x=histogram_data[[i]], fill=in_hospital_death)) + 
       geom_histogram() + 
@@ -423,6 +423,7 @@ exp(cbind(OR = betas, confint(reduced_multivariate_mod)))
 _We can see the variable with the greatest leaverage is the 'ICUTypeCardiac Surgery Recovery Unit', which significantly reduces the chances of in hosptial mortality. If a patient is admitted to the Cardiac Surgery Recovery Unit they are approximately 65% less likely to die within their hospital admission (1-0.35 = 65%)._
 
 
+###Fitting our final model to the Unimputed data
 
 ```{r}
 unimputed_multivariate_vars <- paste(c( "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Creatinine_max", "BUN_min", "GCS_max", "PaO2_max"), collapse = " + ")
@@ -436,9 +437,21 @@ summary(unimputed_multivariate_mod)
 plot(unimputed_multivariate_mod)
 ```
 
+###determine unimputed odds ratios
+
+```{r}
+unimputed_betas <- coef(unimputed_multivariate_mod)
+
+exp(unimputed_betas)
+
+exp(cbind(OR = unimputed_betas, confint(unimputed_multivariate_mod)))
+```
+
 
 7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
 
+
+_Our final model was contained variables "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Creatinine_max", "BUN_min", "GCS_max", and "PaO2_max", of these variables all were found to be sgnificant when fitted to both the imputed and unimputed datasets with the exception of "Gender". Although not statistically significant, "Gender" was retained within the final model because of it's clinical significance within medical modelling. In both imputed and unimputed models ICUTypeCardiacSurgery Recovery Unit was found to have the highest odds risk._
 
 
 
