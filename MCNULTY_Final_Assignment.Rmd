@@ -406,7 +406,7 @@ plot(reduced_multivariate_mod)
 ```
 
 
-###Odds ratios
+_The QQ-plot shows heavy skewing separated into 2 clusters. The first cluster follws the normality line perfectly, however takes a sharp deviation at the first theorretical quantile. The second cluster curves up and to the right, indicating the data is right skewed. This seems to be consistent with the "in_hospital_deaths" variable._
 
 _look at odds ratios of specific variables within the multivariate models._
 
@@ -419,6 +419,20 @@ exp(cbind(OR = betas, confint(reduced_multivariate_mod)))
 ```
 
 _We can see the variable with the greatest leaverage is the 'ICUTypeCardiac Surgery Recovery Unit', which significantly reduces the chances of in hosptial mortality. If a patient is admitted to the Cardiac Surgery Recovery Unit they are approximately 65% less likely to die within their hospital admission (1-0.35 = 65%)._
+
+
+
+```{r}
+unimputed_multivariate_vars <- paste(c( "Age", "Gender", "ICUType", "SAPS1", "SOFA", "Creatinine_max", "BUN_min", "GCS_max", "PaO2_max"), collapse = " + ")
+
+modelformula <- paste("in_hospital_death ~ ", unimputed_multivariate_vars)
+
+unimputed_multivariate_mod <- glm(modelformula, data = icu_patients_df0, family = "binomial")
+
+summary(unimputed_multivariate_mod)
+
+plot(unimputed_multivariate_mod)
+```
 
 
 7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
@@ -623,7 +637,7 @@ prop.reduced_model <- cox.zph(reduced_model)
 prop.reduced_model
 ggcoxzph(prop.reduced_model)
 ```
-_The global test for proportional hazards is significant and that this is largely due to the three predictor variables (ICU_type, SOFA and GCS_max)._
+_The global test for proportional hazards is significant and this is largely due to the three predictor variables (ICU_type, SOFA and GCS_max)._
 
 
 ```{r fig.height=5, fig.width=8}
