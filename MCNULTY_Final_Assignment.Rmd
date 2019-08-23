@@ -307,7 +307,7 @@ _Most ICU admissions are negatively correlated with other ICU admissions. This i
 plot_correlation(na.omit(glm_analysis_df), maxcat = 5L, type = "c")
 ```
 
-_likewise with continuous variables are mostly
+_likewise with continuous variables are mostly un correlated, however, Creatinein_max/BUN_min, and SOFA/SAPS1 correlations raise some concerns. After the Univariate model fitting we can select the variable with a higher statistical significance from these pairs._
 
 
 
@@ -405,6 +405,10 @@ _There appears to be no significant difference between the reduced model and com
 plot(reduced_multivariate_mod)
 ```
 
+_investigat
+
+###Odds ratios
+
 _look at odds ratios of specific variables within the multivariate models._
 
 ```{r}
@@ -416,6 +420,7 @@ exp(cbind(OR = betas, confint(reduced_multivariate_mod)))
 ```
 
 _We can see the variable with the greatest leaverage is the 'ICUTypeCardiac Surgery Recovery Unit', which significantly reduces the chances of in hosptial mortality. If a patient is admitted to the Cardiac Surgery Recovery Unit they are approximately 65% less likely to die within their hospital admission (1-0.35 = 65%)._
+
 
 7. Write a paragraph summarising the most important findings of your final model. Include the most important values from the statistical output, and a simple clinical interpretation.
 
